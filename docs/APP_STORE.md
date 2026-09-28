@@ -5,15 +5,15 @@
 | Item | State |
 |---|---|
 | App record | ✅ **HotspotNav: Car Screen Maps**, Apple ID 6816818389, SKU `teslanav-ios` |
-| Build | ⏳ 1.0 (4) uploaded — attach it in place of build 1 |
+| Build | ✅ 1.0 (4) attached (build 1 removed) |
 | App Information | ✅ subtitle, Navigation / Utilities, content rights (OSM data, licensed) |
 | Age rating | ✅ 4+ (every question None/No) |
 | Pricing & availability | ✅ Free, 175 countries |
 | App Privacy | ✅ published: Data Not Collected; privacy URL set |
 | In-app purchase | ✅ consumable `…teslanav.coffee`, $2.99, display name, review screenshot + notes |
-| Version page | ⏳ replace with the 5 new screenshots (`design/appstore-6.5/`); earlier: 4 screenshots, promo text, description, keywords, support URL, copyright, review notes, sign-in not required, manual release |
-| Review contact | ⏳ needs name, **phone**, email |
-| Submit for Review | ⏳ left for you (attach the coffee IAP to the submission) |
+| Version page | ✅ 5 new screenshots in order (`design/appstore-6.5/`), new promo text, description, keywords, review notes; earlier: 4 screenshots, promo text, description, keywords, support URL, copyright, review notes, sign-in not required, manual release |
+| Review contact | ⏳ left empty; add name, phone and email if the submission asks for them |
+| Submit for Review | ⏳ left for you: Add for Review, include the coffee IAP, submit |
 
 Draft text for App Store Connect. Screenshots: `design/appstore/1-4` (6.9", 1320×2868), upload
 one at a time in order.
