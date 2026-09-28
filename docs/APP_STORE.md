@@ -1,5 +1,20 @@
 # App Store listing — TeslaNav
 
+## Status (2026-09-28)
+
+| Item | State |
+|---|---|
+| App record | ✅ **HotspotNav: Car Screen Maps**, Apple ID 6816818389, SKU `teslanav-ios` |
+| Build | ✅ 1.0 (1) uploaded, processed, attached to version 1.0 |
+| App Information | ✅ subtitle, Navigation / Utilities, content rights (OSM data, licensed) |
+| Age rating | ✅ 4+ (every question None/No) |
+| Pricing & availability | ✅ Free, 175 countries |
+| App Privacy | ✅ published: Data Not Collected; privacy URL set |
+| In-app purchase | ✅ consumable `…teslanav.coffee`, $2.99, display name, review screenshot + notes |
+| Version page | ✅ 4 screenshots (6.5", `design/appstore-6.5/`), promo text, description, keywords, support URL, copyright, review notes, sign-in not required, manual release |
+| Review contact | ⏳ needs name, **phone**, email |
+| Submit for Review | ⏳ left for you (attach the coffee IAP to the submission) |
+
 Draft text for App Store Connect. Screenshots: `design/appstore/1-4` (6.9", 1320×2868), upload
 one at a time in order.
 
