@@ -1,0 +1,17 @@
+:root { --bg:#f6f7f9; --panel:#fff; --ink:#12151b; --muted:#5d6675; --line:#dfe3ea; --accent:#2f7bf5; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1015; --panel:#161b23; --ink:#eef1f6; --muted:#9aa4b2; --line:#2a313c; --accent:#5c9bff; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 700px; margin: 0 auto; padding: 40px 16px 80px; }
+header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
+header img { width: 56px; height: 56px; border-radius: 13px; }
+header a.name { font-weight: 800; font-size: 26px; color: var(--ink); text-decoration: none; }
+nav { margin-left: auto; display: flex; gap: 16px; }
+nav a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px; }
+nav a[aria-current] { color: var(--accent); }
+h1 { font-size: 34px; line-height: 1.15; margin: 0 0 8px; }
+h2 { font-size: 19px; margin: 32px 0 6px; }
+.meta { color: var(--muted); font-size: 14px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 20px 0; }
+a { color: var(--accent); }
+li { margin: 4px 0; }

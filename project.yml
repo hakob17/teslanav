@@ -1,0 +1,87 @@
+name: TeslaNav
+options:
+  bundleIdPrefix: com.hakobhakobyan
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: SXEFA57E5G
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  # The app: HTTP server on :8080, GPS, and the car web page.
+  TeslaNav:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - Shared
+      # Served as-is to the Tesla browser; kept as a folder so paths match URLs.
+      - path: Resources/web
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: TeslaNavBroadcast
+    entitlements:
+      path: Sources/TeslaNav.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.hakobhakobyan.teslanav
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: TeslaNav
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # Location in the background is what keeps the server alive while
+        # another app is in front or the phone is locked.
+        UIBackgroundModes: [location]
+        NSLocationWhenInUseUsageDescription: TeslaNav sends your iPhone's GPS position to the
+          navigation page open in your car's browser.
+        NSLocationAlwaysAndWhenInUseUsageDescription: TeslaNav keeps sending your position to
+          the car while you use other apps or the phone is locked.
+        NSLocalNetworkUsageDescription: TeslaNav serves the navigation page to your car over
+          the Personal Hotspot.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hakobhakobyan.teslanav
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+
+  # ReplayKit broadcast upload extension: writes the screen as JPEG into the App Group.
+  TeslaNavBroadcast:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Broadcast
+      - Shared
+    dependencies:
+      - sdk: ReplayKit.framework
+    entitlements:
+      path: Broadcast/TeslaNavBroadcast.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.hakobhakobyan.teslanav
+    info:
+      path: Broadcast/Info.plist
+      properties:
+        CFBundleDisplayName: TeslaNav Screen
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
+          RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hakobhakobyan.teslanav.broadcast
+schemes:
+  TeslaNav:
+    build:
+      targets:
+        TeslaNav: all
+    run:
+      # Local StoreKit testing, so "Buy me a coffee" works in the simulator without the
+      # sandbox. Debug only — it has no effect on an archive.
+      storeKitConfiguration: TeslaNav.storekit

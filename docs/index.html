@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TeslaNav — Support</title>
+<meta name="description" content="Navigation on your car's screen, served from your iPhone over Personal Hotspot.">
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon.png" alt="">
+    <a class="name" href="./">TeslaNav</a>
+    <nav><a href="./" aria-current="page">Support</a><a href="privacy.html">Privacy</a></nav>
+  </header>
+
+  <h1>Navigation on your car's big screen</h1>
+  <p>TeslaNav turns your iPhone into a small navigation server. Turn on Personal Hotspot, open one
+  bookmark in the car's browser, and get a live map with search, turn-by-turn directions, voice
+  prompts and arrival time — driven by your iPhone's GPS. No cloud, no account.</p>
+
+  <h2>Getting started</h2>
+  <ol>
+    <li>On the iPhone, turn on <b>Personal Hotspot</b>, and join it from the car's Wi-Fi settings.</li>
+    <li>Open TeslaNav once and allow location access.</li>
+    <li>In the car's browser, open <b>http://172.20.10.1:8080</b> and bookmark it.</li>
+    <li>Search a destination on the car screen and drive. You can switch apps or lock the phone.</li>
+  </ol>
+
+  <h2>Mirror mode</h2>
+  <p>Want live traffic from your favourite navigation app? Tap <b>Start Broadcast</b> in TeslaNav,
+  then <b>Phone screen</b> on the car page. Your whole iPhone screen appears in the car.</p>
+
+  <h2>Troubleshooting</h2>
+  <ul>
+    <li><b>The page doesn't load:</b> check the car is joined to your iPhone's hotspot and TeslaNav has been opened since the phone restarted.</li>
+    <li><b>“Lost connection to iPhone”:</b> open TeslaNav on the phone again; iOS may have closed it.</li>
+    <li><b>No search results or map:</b> the car uses your iPhone's mobile data through the hotspot — check you have signal.</li>
+  </ul>
+
+  <div class="panel">
+    Questions and bug reports go to
+    <a href="https://github.com/hakob17/teslanav/issues">GitHub Issues</a>.
+    The app is open source: <a href="https://github.com/hakob17/teslanav">github.com/hakob17/teslanav</a>.
+  </div>
+</main>
+</body>
+</html>

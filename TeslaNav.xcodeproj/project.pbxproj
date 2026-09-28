@@ -1,0 +1,493 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2A6A9C133F74EDEB81F9D0D5 /* WebServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB49A4654C6E86D04FFB403 /* WebServer.swift */; };
+		2E5294517E93BB97E23D104F /* FrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25BBBE86476F82E68A4E3280 /* FrameStore.swift */; };
+		4BE11E595FCD462FB83B0AEB /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AE92AB2D8FE3DEC48E622C /* LocationService.swift */; };
+		6CFB74024FEFFEB238521C74 /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1023D9D97A6758AF26F701C2 /* SampleHandler.swift */; };
+		6E2C080D792E3DA0B82A690B /* TeslaNavApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3496833AB02377737A983AEE /* TeslaNavApp.swift */; };
+		76A4D028CEF35E9710C9E671 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE146D361FF7234DF247164D /* Assets.xcassets */; };
+		8060BF342120B4AA34AA5031 /* TeslaNavBroadcast.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5443EF84DD3F57963D8CEE9E /* TeslaNavBroadcast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		839A0064EA8C5E93A8C59FBC /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05810DEB1F991F0834EB93D6 /* Shared.swift */; };
+		943158A13B0E035E70C9D0DA /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05810DEB1F991F0834EB93D6 /* Shared.swift */; };
+		AED231609215C11B1A0D2C76 /* Tips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */; };
+		D52496744DF0B30EA7F82F88 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 154592699269B3ED770CC48E /* ReplayKit.framework */; };
+		F7290839311C9F92DE33FE9F /* web in Resources */ = {isa = PBXBuildFile; fileRef = 7C80D76CC397D28CF31979FB /* web */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1C93EB966E165534DD2D9E63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A8ECA430E0167BB41B49F79C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 65399CAE29DEFD10555BFE4B;
+			remoteInfo = TeslaNavBroadcast;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C8E7B0F61DFE856963471763 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8060BF342120B4AA34AA5031 /* TeslaNavBroadcast.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		05810DEB1F991F0834EB93D6 /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
+		1023D9D97A6758AF26F701C2 /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
+		154592699269B3ED770CC48E /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
+		25BBBE86476F82E68A4E3280 /* FrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameStore.swift; sourceTree = "<group>"; };
+		2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tips.swift; sourceTree = "<group>"; };
+		3496833AB02377737A983AEE /* TeslaNavApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaNavApp.swift; sourceTree = "<group>"; };
+		44AE92AB2D8FE3DEC48E622C /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		5068E61A2925A0B2E312768C /* TeslaNav.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaNav.entitlements; sourceTree = "<group>"; };
+		5443EF84DD3F57963D8CEE9E /* TeslaNavBroadcast.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TeslaNavBroadcast.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CB49A4654C6E86D04FFB403 /* WebServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebServer.swift; sourceTree = "<group>"; };
+		79984F9C7632FB5B64460F41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7C80D76CC397D28CF31979FB /* web */ = {isa = PBXFileReference; lastKnownFileType = folder; name = web; path = Resources/web; sourceTree = SOURCE_ROOT; };
+		AD9B456FF1EAA06C72E6CB4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		AF10002DA98A6A388B5A9C75 /* TeslaNavBroadcast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaNavBroadcast.entitlements; sourceTree = "<group>"; };
+		B7F4628BA147FB28CBE756AB /* TeslaNav.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TeslaNav.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE146D361FF7234DF247164D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CD5227FC9560A061409FA66F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D52496744DF0B30EA7F82F88 /* ReplayKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		63F9FE9F762B35C8646F53CA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				CE146D361FF7234DF247164D /* Assets.xcassets */,
+				25BBBE86476F82E68A4E3280 /* FrameStore.swift */,
+				AD9B456FF1EAA06C72E6CB4E /* Info.plist */,
+				44AE92AB2D8FE3DEC48E622C /* LocationService.swift */,
+				5068E61A2925A0B2E312768C /* TeslaNav.entitlements */,
+				3496833AB02377737A983AEE /* TeslaNavApp.swift */,
+				2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */,
+				5CB49A4654C6E86D04FFB403 /* WebServer.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		913A8FC6D25C8A1B752E2E09 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				154592699269B3ED770CC48E /* ReplayKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9DC901DFA06EBF07E3745CDA /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				05810DEB1F991F0834EB93D6 /* Shared.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		A6B6A803C06B0407FEB30A20 /* Broadcast */ = {
+			isa = PBXGroup;
+			children = (
+				79984F9C7632FB5B64460F41 /* Info.plist */,
+				1023D9D97A6758AF26F701C2 /* SampleHandler.swift */,
+				AF10002DA98A6A388B5A9C75 /* TeslaNavBroadcast.entitlements */,
+			);
+			path = Broadcast;
+			sourceTree = "<group>";
+		};
+		CFAF18E2C8B2CAF4AE4E2673 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B7F4628BA147FB28CBE756AB /* TeslaNav.app */,
+				5443EF84DD3F57963D8CEE9E /* TeslaNavBroadcast.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DD38D00EFA183CD42885DB28 = {
+			isa = PBXGroup;
+			children = (
+				7C80D76CC397D28CF31979FB /* web */,
+				A6B6A803C06B0407FEB30A20 /* Broadcast */,
+				9DC901DFA06EBF07E3745CDA /* Shared */,
+				63F9FE9F762B35C8646F53CA /* Sources */,
+				913A8FC6D25C8A1B752E2E09 /* Frameworks */,
+				CFAF18E2C8B2CAF4AE4E2673 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1B179D34FBDB2E9F9336BDB1 /* TeslaNav */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E3312F2069934B74AF47C99B /* Build configuration list for PBXNativeTarget "TeslaNav" */;
+			buildPhases = (
+				4C9547976A70C3863D0B8DB0 /* Sources */,
+				AA69C3FFB50EF1EA28BEF3D4 /* Resources */,
+				C8E7B0F61DFE856963471763 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5DE2AEFDB2DB06E274ECB4CA /* PBXTargetDependency */,
+			);
+			name = TeslaNav;
+			packageProductDependencies = (
+			);
+			productName = TeslaNav;
+			productReference = B7F4628BA147FB28CBE756AB /* TeslaNav.app */;
+			productType = "com.apple.product-type.application";
+		};
+		65399CAE29DEFD10555BFE4B /* TeslaNavBroadcast */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E5DA1838AAE20E34C7B64D9D /* Build configuration list for PBXNativeTarget "TeslaNavBroadcast" */;
+			buildPhases = (
+				10D04DD31702D9E0A5DE7882 /* Sources */,
+				CD5227FC9560A061409FA66F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TeslaNavBroadcast;
+			packageProductDependencies = (
+			);
+			productName = TeslaNavBroadcast;
+			productReference = 5443EF84DD3F57963D8CEE9E /* TeslaNavBroadcast.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A8ECA430E0167BB41B49F79C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					1B179D34FBDB2E9F9336BDB1 = {
+						DevelopmentTeam = SXEFA57E5G;
+						ProvisioningStyle = Automatic;
+					};
+					65399CAE29DEFD10555BFE4B = {
+						DevelopmentTeam = SXEFA57E5G;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = D29437A59FF6DC3B175AC8BF /* Build configuration list for PBXProject "TeslaNav" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = DD38D00EFA183CD42885DB28;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1B179D34FBDB2E9F9336BDB1 /* TeslaNav */,
+				65399CAE29DEFD10555BFE4B /* TeslaNavBroadcast */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA69C3FFB50EF1EA28BEF3D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				76A4D028CEF35E9710C9E671 /* Assets.xcassets in Resources */,
+				F7290839311C9F92DE33FE9F /* web in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		10D04DD31702D9E0A5DE7882 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6CFB74024FEFFEB238521C74 /* SampleHandler.swift in Sources */,
+				943158A13B0E035E70C9D0DA /* Shared.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C9547976A70C3863D0B8DB0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2E5294517E93BB97E23D104F /* FrameStore.swift in Sources */,
+				4BE11E595FCD462FB83B0AEB /* LocationService.swift in Sources */,
+				839A0064EA8C5E93A8C59FBC /* Shared.swift in Sources */,
+				6E2C080D792E3DA0B82A690B /* TeslaNavApp.swift in Sources */,
+				AED231609215C11B1A0D2C76 /* Tips.swift in Sources */,
+				2A6A9C133F74EDEB81F9D0D5 /* WebServer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5DE2AEFDB2DB06E274ECB4CA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 65399CAE29DEFD10555BFE4B /* TeslaNavBroadcast */;
+			targetProxy = 1C93EB966E165534DD2D9E63 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		04B1AA7C3986DE568D29B139 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Broadcast/TeslaNavBroadcast.entitlements;
+				INFOPLIST_FILE = Broadcast/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hakobhakobyan.teslanav.broadcast;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4B201E4CEDEE45FA70046597 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = SXEFA57E5G;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		95ACDBD31AE6B102C5C66EA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/TeslaNav.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Sources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hakobhakobyan.teslanav;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A9D315AFED575ED51B4B2E7D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Broadcast/TeslaNavBroadcast.entitlements;
+				INFOPLIST_FILE = Broadcast/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hakobhakobyan.teslanav.broadcast;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B372D9707B23ACC21AA15327 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/TeslaNav.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Sources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hakobhakobyan.teslanav;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		FBCAF7D757FDD464EE1F5A36 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = SXEFA57E5G;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D29437A59FF6DC3B175AC8BF /* Build configuration list for PBXProject "TeslaNav" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FBCAF7D757FDD464EE1F5A36 /* Debug */,
+				4B201E4CEDEE45FA70046597 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E3312F2069934B74AF47C99B /* Build configuration list for PBXNativeTarget "TeslaNav" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B372D9707B23ACC21AA15327 /* Debug */,
+				95ACDBD31AE6B102C5C66EA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E5DA1838AAE20E34C7B64D9D /* Build configuration list for PBXNativeTarget "TeslaNavBroadcast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				04B1AA7C3986DE568D29B139 /* Debug */,
+				A9D315AFED575ED51B4B2E7D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A8ECA430E0167BB41B49F79C /* Project object */;
+}

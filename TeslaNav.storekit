@@ -1,0 +1,36 @@
+{
+  "identifier" : "7E4A1C2B",
+  "nonRenewingSubscriptions" : [
+  ],
+  "products" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "6815400002",
+      "localizations" : [
+        {
+          "description" : "A thank-you to the developer. Unlocks nothing — TeslaNav stays free.",
+          "displayName" : "Buy me a coffee",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.hakobhakobyan.teslanav.coffee",
+      "referenceName" : "Buy me a coffee",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_developerTeamID" : "SXEFA57E5G",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+    ]
+  },
+  "subscriptionGroups" : [
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
