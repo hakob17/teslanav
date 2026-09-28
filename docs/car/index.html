@@ -38,6 +38,18 @@ button svg{width:28px;height:28px}
 
 /* search */
 #search{top:16px;overflow:hidden}
+#chargerPanel{top:16px;bottom:16px;display:flex;flex-direction:column;overflow:hidden}
+#chargerPanel header{display:flex;align-items:center;gap:12px;padding:14px 14px 10px 20px}
+#chargerPanel header b{flex:1;font-size:22px}
+#chargerPanel header button{min-height:48px;padding:0 16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 12px}
+.chip{min-height:44px;padding:0 16px;border-radius:999px;font-size:16px;background:#1b212a}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.chipLabel{width:100%;color:var(--quiet);font-size:14px;margin:2px 0 -2px}
+#chargerList{overflow:auto;border-top:1px solid var(--line);flex:1}
+#chargerList .res b{display:flex;gap:8px;align-items:center}
+.res .conn,.conn{display:inline-block;font-size:13px;font-weight:600;padding:2px 8px;border-radius:6px;background:#1f3a2a;color:#8ee6b0;margin:6px 6px 0 0}
+.conn.unknown{background:#2a2f38;color:var(--quiet)}
 #searchRow{display:flex;align-items:center}
 #searchRow svg{width:28px;height:28px;margin-left:20px;color:var(--quiet);flex:none}
 #q{flex:1;min-width:0;height:68px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:22px;padding:0 16px;outline:none}
@@ -122,6 +134,13 @@ body.navigating #status{bottom:130px}
   <div id="results"></div>
 </div>
 
+<div id="chargerPanel" class="panel left hidden">
+  <header><b>EV chargers</b><button id="chargerMapBtn"></button><button id="chargerClose" aria-label="Close">✕</button></header>
+  <div class="chips" id="connChips"></div>
+  <div class="chips" id="opChips"></div>
+  <div id="chargerList"></div>
+</div>
+
 <div id="banner" class="panel left hidden">
   <div id="bIcon"></div>
   <div style="min-width:0">
@@ -148,6 +167,7 @@ body.navigating #status{bottom:130px}
   <button id="recenter" class="hidden" aria-label="Recenter">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l7 19-7-4-7 4z"/></svg>
   </button>
+  <button id="chargersFab" class="label">⚡ Chargers</button>
   <button id="mirrorBtn" class="label">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>
     Phone screen
@@ -162,7 +182,7 @@ body.navigating #status{bottom:130px}
   <button id="testVoice">Test voice</button>
   <button id="styleBtn"></button>
   <button id="engineBtn"></button>
-  <button id="chargersBtn"></button>
+
   <button id="simBtn">Simulate drive</button>
   <button id="pairBtn">📱  Phone code</button>
 </div>
@@ -696,6 +716,8 @@ const STOP = new Set(['street', 'st', 'str', 'avenue', 'ave', 'road', 'rd', 'lan
   'улица', 'проспект', 'փողոց', 'պողոտա', 'թաղամաս', 'նրբանցք', 'հրապարակ', 'մայրուղի'].flatMap(fold));
 const words = text => fold(text).filter(w => !STOP.has(w));
 
+const CHARGER_WORDS = ['charger', 'charging', 'charge', 'chargers', 'ev', 'зарядка', 'зарядная', 'зарядные', 'заряд',
+  'լիցքավորում', 'լիցքավորման', 'lickavorum'].flatMap(fold);
 const isLatin = t => /^[\x00-\x7F«»“”‘’–—]+$/.test(t);
 let searchIndex = null, addressIndex = null;
 
@@ -786,6 +808,16 @@ async function searchLocal(text, c) {
       const label = e.kind === 3 ? (e.extra === 'yes' ? '' : (e.extra || '').replace(/_/g, ' ')) : KIND_LABEL[e.kind];
       const detail = [e.display !== e.name ? e.name : '', label, e.town].filter(Boolean).join(' · ');
       found.push({ score, name: e.display, detail, lat: e.lat, lng: e.lng });
+    }
+  }
+  // EV chargers: by name or operator, or all nearby for "charger", "зарядка", "լիցքավորում"…
+  const wantsChargers = CHARGER_WORDS.some(k => qw.some(w => w.length >= 3 && k.startsWith(w)));
+  if (qw.length) {
+    for (const ch of await loadChargers()) {
+      const m = wantsChargers ? 12 : Math.max(matchScore(qw, words(ch.n)), ch.o ? matchScore(qw, words(ch.o)) : 0);
+      if (!m) continue;
+      const detail = ['EV charger', ch.o, ch.s.join(', ') || 'connectors not listed'].filter(Boolean).join(' · ');
+      found.push({ score: m + 14 - 12 * Math.log10(1 + dist(c, ch) / 1000), name: '⚡ ' + ch.n, detail, lat: ch.lat, lng: ch.lng });
     }
   }
   found.sort((a, b) => b.score - a.score);
@@ -1172,31 +1204,109 @@ $('engineBtn').onclick = () => { store.set('engine', M.kind === 'vector' ? 'clas
 renderMenu();
 
 // ---------------------------------------------------------------- chargers
-// EV charging stations from OpenStreetMap (data/am-chargers.json, built with the search index).
+// EV charging stations (data/am-chargers.json: OpenStreetMap, plus Open Charge Map when the
+// index is built with a key). The ⚡ panel lists them nearest first with connector and
+// operator filters; the map shows the ones that pass the filters.
 let chargersOn = store.get('chargers', false), chargerList = null;
-const SOCKET = { type2: 'Type 2', type2_combo: 'CCS2', chademo: 'CHAdeMO', gb_t: 'GB/T', gb_t_dc: 'GB/T DC', type1: 'Type 1',
-                 type1_combo: 'CCS1', tesla_supercharger: 'Tesla', schuko: 'Socket' };
+let chargerFilter = store.get('chargerFilter', { conn: '', op: '', unknown: false });
+let bigOperators = new Set();   // operators with 2+ stations get their own chip; the rest are "Other"
+const CONNECTORS = ['CCS2', 'Type 2', 'CHAdeMO', 'GB/T', 'GB/T DC', 'Tesla'];
+const SOCKET = { type2: 'Type 2', type2_combo: 'CCS2', chademo: 'CHAdeMO', gb_t: 'GB/T', gb_t_dc: 'GB/T DC', gb_ac: 'GB/T',
+                 type1: 'Type 1', type1_combo: 'CCS1', tesla_supercharger: 'Tesla', schuko: 'Socket' };
+
+async function loadChargers() {
+  if (!chargerList) {
+    const d = await (await fetch('data/am-chargers.json')).json();
+    // A station named only in Armenian ("Թիմ էներջի") shows its operator's name ("Team Energy") instead.
+    chargerList = d.chargers.map(c => ({ ...c, n: isLatin(c.n) ? c.n : (c.o && isLatin(c.o) ? c.o : readable(c.n)),
+      s: c.s.map(k => SOCKET[k] || k), lat: c.ll[0] / 1e5, lng: c.ll[1] / 1e5 }));
+    const counts = {};
+    chargerList.forEach(c => { if (c.o) counts[c.o] = (counts[c.o] || 0) + 1; });
+    bigOperators = new Set(Object.keys(counts).filter(o => counts[o] >= 2));
+  }
+  return chargerList;
+}
+
+const opOf = c => bigOperators.has(c.o) ? c.o : 'Other';
+function passes(c, f = chargerFilter) {
+  if (f.op && opOf(c) !== f.op) return false;
+  if (!f.conn) return true;
+  if (!c.s.length) return f.unknown;          // no connector data: shown only when asked
+  return c.s.includes(f.conn) || (f.conn === 'GB/T' && c.s.includes('GB/T DC'));
+}
+
+function connBadges(c) {
+  return c.s.length ? c.s.map(k => `<span class="conn">${esc(k)}</span>`).join('')
+                    : '<span class="conn unknown">Connectors not listed</span>';
+}
+
 function showCharger(c) {
   const el = document.createElement('div');
-  el.style.cssText = 'min-width:220px;font-size:16px';
-  const sockets = c.s.map(k => SOCKET[k] || k).join(', ') || 'Connectors unknown';
-  el.innerHTML = `<b>${esc(c.n)}</b><div style="color:var(--quiet);margin:4px 0 10px">${esc([c.o, sockets, c.p].filter(Boolean).join(' · '))}</div>`;
+  el.style.cssText = 'min-width:240px;font-size:16px';
+  el.innerHTML = `<b>${esc(c.n)}</b><div style="color:var(--quiet);margin:4px 0 2px">${esc([c.o, c.p, c.c && c.c + ' points'].filter(Boolean).join(' · '))}</div>
+    <div style="margin-bottom:12px">${connBadges(c)}</div>`;
   const go = document.createElement('button');
   go.className = 'primary'; go.textContent = 'Drive here';
-  go.onclick = () => { M.closePopup(); routeTo({ lat: c.lat, lng: c.lng, name: c.n }); };
+  go.onclick = () => { M.closePopup(); show($('chargerPanel'), false); routeTo({ lat: c.lat, lng: c.lng, name: c.n }); };
   el.appendChild(go);
   M.popup(c, el);
 }
+
 async function renderChargers() {
-  $('chargersBtn').textContent = chargersOn ? '⚡  Hide chargers' : '⚡  Show chargers';
-  if (!chargersOn) return M.setChargers([], showCharger);
+  $('chargerMapBtn').textContent = chargersOn ? 'Hide on map' : 'Show on map';
+  const panelOpen = !$('chargerPanel').classList.contains('hidden');
+  if (!chargersOn && !panelOpen) return M.setChargers([], showCharger);
   try {
-    chargerList = chargerList || (await (await fetch('data/am-chargers.json')).json()).chargers
-      .map(c => ({ ...c, lat: c.ll[0] / 1e5, lng: c.ll[1] / 1e5 }));
-    M.setChargers(chargerList, showCharger);
+    const list = await loadChargers();
+    M.setChargers(list.filter(c => passes(c)), showCharger);
+    if (panelOpen) renderChargerPanel(list);
   } catch { toast('Couldn’t load chargers'); }
 }
-$('chargersBtn').onclick = () => { chargersOn = !chargersOn; store.set('chargers', chargersOn); $('menu').classList.add('hidden'); renderChargers(); };
+
+function renderChargerPanel(list) {
+  const f = chargerFilter;
+  const chip = (label, on, onClick) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (on ? ' on' : ''); b.textContent = label; b.onclick = onClick;
+    return b;
+  };
+  const setF = patch => { chargerFilter = { ...chargerFilter, ...patch }; store.set('chargerFilter', chargerFilter); renderChargers(); };
+
+  // Connectors actually present, then operators by number of stations.
+  const conns = CONNECTORS.filter(k => list.some(c => c.s.includes(k)));
+  const ops = Object.entries(list.reduce((m, c) => (m[opOf(c)] = (m[opOf(c)] || 0) + 1, m), {}))
+    .sort((a, b) => (a[0] === 'Other') - (b[0] === 'Other') || b[1] - a[1]).map(([o]) => o);
+
+  const cc = $('connChips'); cc.innerHTML = '<div class="chipLabel">Connector</div>';
+  cc.append(chip('Any', !f.conn, () => setF({ conn: '' })), ...conns.map(k => chip(k, f.conn === k, () => setF({ conn: k }))));
+  if (f.conn) cc.append(chip('+ not listed', f.unknown, () => setF({ unknown: !f.unknown })));
+  const oc = $('opChips'); oc.innerHTML = '<div class="chipLabel">Operator</div>';
+  oc.append(chip('All', !f.op, () => setF({ op: '' })), ...ops.map(o => chip(o, f.op === o, () => setF({ op: o }))));
+
+  const here = pos || M.center();
+  const shown = list.filter(c => passes(c)).sort((a, b) => dist(here, a) - dist(here, b)).slice(0, 40);
+  const box = $('chargerList'); box.innerHTML = '';
+  if (!shown.length) {
+    const unknown = list.filter(c => !c.s.length && passes(c, { ...f, conn: '' })).length;
+    box.innerHTML = `<div class="res note">No station lists ${esc(f.conn || 'that')} yet${unknown && f.conn ? ` — ${unknown} don’t list their connectors; tap “+ not listed” to include them` : ''}.</div>`;
+  }
+  for (const c of shown) {
+    const div = document.createElement('div');
+    div.className = 'res';
+    div.innerHTML = `<b>⚡ ${esc(c.n)}</b><span>${esc([c.o, c.p, fmtDist(dist(here, c))].filter(Boolean).join(' · '))}</span><div>${connBadges(c)}</div>`;
+    div.onclick = () => { setFollow(false); M.jump(c, { zoom: 16 }); showCharger(c); };
+    box.appendChild(div);
+  }
+}
+
+$('chargersFab').onclick = () => {
+  const open = $('chargerPanel').classList.contains('hidden');
+  show($('chargerPanel'), open);
+  show($('search'), !open && !route);
+  renderChargers();
+};
+$('chargerClose').onclick = () => { show($('chargerPanel'), false); show($('search'), !route); renderChargers(); };
+$('chargerMapBtn').onclick = () => { chargersOn = !chargersOn; store.set('chargers', chargersOn); renderChargers(); };
 renderChargers();
 
 /** Drives the current route at 50 km/h — for testing at a desk or parked. */

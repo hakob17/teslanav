@@ -8,6 +8,10 @@ Writes, under docs/car/data/:
   am-addresses.json  house addresses (loaded only when a query contains a number)
   am-chargers.json   EV charging stations with their connectors
 
+Chargers come from OpenStreetMap and, when OCM_API_KEY is set (a free key from
+openchargemap.org), from Open Charge Map too, which knows far more connectors and power
+ratings. Stations within 80 m of each other are merged.
+
 Names are stored as they are in OSM (Armenian, English, Russian, alternative names); the car
 page transliterates and folds them at load time, so "kaskad", "Каскад", "Կասկադ" and "cascade"
 all meet. Coordinates are integers in 1e-5 degrees (~1 m).
@@ -16,8 +20,10 @@ Data © OpenStreetMap contributors, ODbL.
 """
 import json
 import math
+import os
 import sys
 import time
+import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
@@ -34,6 +40,51 @@ ROAD_TYPES = {"motorway", "trunk", "primary", "secondary", "tertiary", "resident
               "secondary_link", "tertiary_link"}
 SKIP_AMENITY = {"parking", "bench", "waste_basket", "toilets", "drinking_water", "parking_space",
                 "bicycle_parking", "vending_machine", "shelter", "recycling", "grit_bin", "clock"}
+
+
+# One spelling per operator, so the filter doesn't list the same company twice.
+OPERATORS = {"թիմ էներջի": "Team Energy", "team energy": "Team Energy", "evan": "EVAN", "energo": "EnerGo",
+             "tesla, inc.": "Tesla", "tesla": "Tesla"}
+# OSM socket:* keys → the names drivers know.
+SOCKETS = {"type2": "Type 2", "type2_combo": "CCS2", "chademo": "CHAdeMO", "gb_t": "GB/T", "gb_t_dc": "GB/T DC",
+           "gb_ac": "GB/T", "gb_dc": "GB/T DC", "type2_cable": "Type 2",
+           "type1": "Type 1", "type1_combo": "CCS1", "tesla_supercharger": "Tesla", "schuko": "Socket"}
+
+
+def operator_name(raw):
+    return OPERATORS.get((raw or "").strip().lower(), (raw or "").strip())
+
+
+def open_charge_map(key):
+    """Chargers in Armenia from Open Charge Map (CC BY 4.0), with connectors and power."""
+    url = ("https://api.openchargemap.io/v3/poi/?output=json&countrycode=AM&maxresults=2000"
+           f"&compact=false&verbose=false&key={key}")
+    req = urllib.request.Request(url, headers={"User-Agent": "TeslaNav index builder"})
+    data = json.load(urllib.request.urlopen(req, timeout=60))
+    out = []
+    for poi in data:
+        a = poi.get("AddressInfo") or {}
+        conns = poi.get("Connections") or []
+        sockets, power = set(), 0
+        for c in conns:
+            t = ((c.get("ConnectionType") or {}).get("Title") or "").lower()
+            if "ccs" in t and "type 2" in t or "combo 2" in t: sockets.add("CCS2")
+            elif "ccs" in t or "combo 1" in t: sockets.add("CCS1")
+            elif "chademo" in t: sockets.add("CHAdeMO")
+            elif "gb" in t and "dc" in t: sockets.add("GB/T DC")
+            elif "gb" in t: sockets.add("GB/T")
+            elif "type 2" in t or "mennekes" in t: sockets.add("Type 2")
+            elif "type 1" in t or "j1772" in t: sockets.add("Type 1")
+            elif "tesla" in t: sockets.add("Tesla")
+            power = max(power, c.get("PowerKW") or 0)
+        out.append({
+            "n": a.get("Title") or "Charging station",
+            "o": operator_name((poi.get("OperatorInfo") or {}).get("Title", "")),
+            "s": sorted(sockets), "c": str(poi.get("NumberOfPoints") or ""),
+            "p": f"{power:g} kW" if power else "",
+            "ll": fix(a["Latitude"], a["Longitude"]), "src": "ocm",
+        })
+    return out
 
 
 def names(tags):
@@ -74,10 +125,11 @@ class Collector(osmium.SimpleHandler):
         if tags.get("amenity") == "charging_station":
             p = self.point_of(obj)
             if p:
-                sockets = sorted({k.split(":")[1] for k in tags if k.startswith("socket:") and k.count(":") == 1})
+                sockets = sorted({SOCKETS.get(k.split(":")[1], k.split(":")[1])
+                                  for k in tags if k.startswith("socket:") and k.count(":") == 1})
                 self.chargers.append({
                     "n": tags.get("name") or tags.get("operator") or "Charging station",
-                    "o": tags.get("operator") or tags.get("brand") or "",
+                    "o": operator_name(tags.get("operator") or tags.get("brand")),
                     "s": sockets, "c": tags.get("capacity", ""),
                     "p": tags.get("charging_station:output") or tags.get("socket:type2_combo:output") or "",
                     "ll": fix(*p),
@@ -188,8 +240,32 @@ def main():
     (OUT / "am-addresses.json").write_text(json.dumps(
         {"v": 1, "streets": by_street}, ensure_ascii=False, separators=(",", ":")))
 
+    chargers, sources = c.chargers, ["© OpenStreetMap contributors (ODbL)"]
+    # "ecocars", "EcoCars", "Ecocars": one operator, spelled the way most stations spell it.
+    spellings = defaultdict(lambda: defaultdict(int))
+    for ch in chargers:
+        if ch["o"]:
+            spellings[ch["o"].lower()][ch["o"]] += 1
+    for ch in chargers:
+        if ch["o"]:
+            ch["o"] = max(spellings[ch["o"].lower()].items(), key=lambda kv: kv[1])[0]
+    if os.environ.get("OCM_API_KEY"):
+        ocm = open_charge_map(os.environ["OCM_API_KEY"])
+        sources.append("Open Charge Map (CC BY 4.0)")
+        # Merge: an OCM station within 80 m of an OSM one fills in what OSM lacks.
+        for o in ocm:
+            twin = next((x for x in chargers if km(x["ll"], o["ll"]) < 0.08), None)
+            if twin:
+                twin["s"] = sorted(set(twin["s"]) | set(o["s"]))
+                twin["p"] = twin["p"] or o["p"]
+                twin["o"] = twin["o"] or o["o"]
+                twin["c"] = twin["c"] or o["c"]
+            else:
+                chargers.append(o)
+        print(f"Open Charge Map: {len(ocm)} stations merged")
     (OUT / "am-chargers.json").write_text(json.dumps(
-        {"v": 1, "built": time.strftime("%Y-%m-%d"), "chargers": c.chargers}, ensure_ascii=False, separators=(",", ":")))
+        {"v": 2, "built": time.strftime("%Y-%m-%d"), "sources": sources, "chargers": chargers},
+        ensure_ascii=False, separators=(",", ":")))
 
     for f in ("am-search.json", "am-addresses.json", "am-chargers.json"):
         print(f, f"{(OUT / f).stat().st_size / 1e6:.1f} MB")
