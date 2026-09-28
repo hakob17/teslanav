@@ -22,6 +22,10 @@
 	<string>1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>TeslaNav serves the navigation page to your car over the Personal Hotspot.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

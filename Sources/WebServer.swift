@@ -67,6 +67,10 @@ final class WebServer {
                 break
             }
         }
+        // Advertising over Bonjour is what makes iOS ask for Local Network permission. A plain
+        // listener never triggers the prompt, and without the permission iOS refuses every
+        // connection from the car.
+        listener.service = NWListener.Service(name: "TeslaNav", type: "_http._tcp")
         listener.newConnectionHandler = { [weak self] connection in self?.accept(connection) }
         listener.start(queue: queue)
         self.listener = listener
