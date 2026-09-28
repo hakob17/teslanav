@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Fake iPhone for testing the relay and the car page: animates a canvas, encodes it to
+     H.264 (Annex B) with WebCodecs and sends it with the same framing as the broadcast
+     extension. Open with ?room=XXXXXXXX. -->
+<meta charset="utf-8">
+<canvas id="c" width="1170" height="2532" style="height:90vh"></canvas>
+<pre id="log"></pre>
+<script>
+const room = new URLSearchParams(location.search).get('room') || 'TEST1234';
+const log = m => { document.getElementById('log').textContent = m; };
+const c = document.getElementById('c'), g = c.getContext('2d');
+let format = null, forceKey = true, encoder = null, n = 0, cars = 0;
+const ws = new WebSocket(`wss://teslanav-relay.hakob-hakobyan173.workers.dev/ws?room=${room}&role=phone`);
+ws.binaryType = 'arraybuffer';
+ws.onmessage = e => {
+  const m = JSON.parse(e.data);
+  if (m.type === 'cars') cars = m.count;
+  if (m.type === 'want') { format = m.format; forceKey = true; if (format === 'h264') startEncoder(); }
+  if (m.type === 'keyframe') forceKey = true;
+};
+function packet(kind, ts, payload) {
+  const out = new Uint8Array(5 + payload.byteLength);
+  out[0] = kind; new DataView(out.buffer).setUint32(1, ts >>> 0); out.set(new Uint8Array(payload), 5);
+  return out;
+}
+const codec = 'avc1.640033';
+function startEncoder() {
+  if (encoder) { ws.send(JSON.stringify({ type: 'config', codec, width: 1170, height: 2532, rotation: 0 })); return; }
+  encoder = new VideoEncoder({
+    output: (chunk) => {
+      const buf = new ArrayBuffer(chunk.byteLength); chunk.copyTo(buf);
+      ws.send(packet(chunk.type === 'key' ? 1 : 2, chunk.timestamp / 1000, buf));
+    },
+    error: e => log('encoder error ' + e),
+  });
+  encoder.configure({ codec, width: 1170, height: 2532, bitrate: 1_500_000, framerate: 15, latencyMode: 'realtime', avc: { format: 'annexb' } });
+  ws.send(JSON.stringify({ type: 'config', codec, width: 1170, height: 2532, rotation: 0 }));
+}
+setInterval(() => {
+  n++;
+  g.fillStyle = `hsl(${n * 4 % 360},60%,25%)`; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#fff'; g.font = 'bold 160px system-ui'; g.fillText('Fake iPhone', 120, 400);
+  g.font = 'bold 300px system-ui'; g.fillText(String(n), 120, 1300);
+  g.beginPath(); g.arc(585 + 400 * Math.sin(n / 10), 1900, 120, 0, 7); g.fill();
+  log(`room ${room} · cars ${cars} · format ${format} · frame ${n}`);
+  if (!cars || ws.readyState !== 1) return;
+  if (format === 'h264' && encoder && encoder.encodeQueueSize < 3) {
+    const frame = new VideoFrame(c, { timestamp: n * 66666 });
+    encoder.encode(frame, { keyFrame: forceKey || n % 30 === 0 }); forceKey = false; frame.close();
+  } else if (format === 'jpeg') {
+    c.toBlob(b => b.arrayBuffer().then(a => ws.send(packet(3, Date.now(), a))), 'image/jpeg', 0.5);
+  }
+}, 66);
+</script>

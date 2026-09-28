@@ -2,3 +2,6 @@ build/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 .DS_Store
+relay/.wrangler/
+relay/node_modules/
+relay/mac-test/mac-test

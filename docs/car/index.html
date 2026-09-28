@@ -85,10 +85,17 @@ body.navigating #status{bottom:130px}
 
 /* mirror mode */
 #mirror{position:fixed;inset:0;z-index:2000;background:#000;display:flex;align-items:center;justify-content:center}
-#mirrorImg{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+#mirrorCanvas{width:100%;height:100%;display:block}
 #mirrorBack{position:absolute;top:16px;right:16px;background:var(--panel);font-weight:600}
 #mirrorHint{position:absolute;max-width:560px;padding:28px;text-align:center;font-size:22px}
 #mirrorHint p{color:var(--quiet);font-size:18px;margin:12px 0 0}
+#pair{position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+#pairBox{width:min(560px,calc(100% - 32px));padding:28px}
+#pairBox h2{margin:0 0 8px;font-size:26px}
+#pairBox p{color:var(--quiet);margin:0 0 18px}
+#pairCode{width:100%;height:72px;font:700 34px/1 ui-monospace,Menlo,monospace;letter-spacing:6px;text-transform:uppercase;text-align:center;
+  background:#0d1015;color:var(--ink);border:1px solid var(--line);border-radius:14px;outline:none}
+#pairBox .row{display:flex;gap:12px;justify-content:flex-end;margin-top:18px}
 </style>
 </head>
 <body>
@@ -128,7 +135,7 @@ body.navigating #status{bottom:130px}
   <button id="recenter" class="hidden" aria-label="Recenter">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l7 19-7-4-7 4z"/></svg>
   </button>
-  <button id="mirrorBtn" class="label hidden">
+  <button id="mirrorBtn" class="label">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>
     Phone screen
   </button>
@@ -142,21 +149,31 @@ body.navigating #status{bottom:130px}
   <button id="testVoice">Test voice</button>
   <button id="styleBtn"></button>
   <button id="simBtn">Simulate drive</button>
+  <button id="pairBtn">📱  Phone code</button>
 </div>
 
 <div id="status" class="panel hidden"></div>
 <div id="toast" class="panel" style="opacity:0"></div>
 
 <div id="mirror" class="hidden">
-  <img id="mirrorImg" alt="">
-  <div id="mirrorHint" class="panel hidden">
-    Waiting for the iPhone screen…
+  <canvas id="mirrorCanvas"></canvas>
+  <div id="mirrorHint" class="panel">
+    <span id="mirrorHintTitle">Connecting…</span>
     <p>On the iPhone, open TeslaNav and tap <b>Start Broadcast</b>, then switch to Yandex, Google Maps or Waze.</p>
   </div>
   <button id="mirrorBack">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>
     Map
   </button>
+</div>
+
+<div id="pair" class="hidden">
+  <div id="pairBox" class="panel">
+    <h2>Pair with your iPhone</h2>
+    <p>Enter the 8-character code shown in the TeslaNav app on your iPhone.</p>
+    <input id="pairCode" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX">
+    <div class="row"><button id="pairCancel">Cancel</button><button id="pairOk" class="primary">Connect</button></div>
+  </div>
 </div>
 
 <script src="leaflet.js"></script>
@@ -346,32 +363,9 @@ map.on('dragstart', () => setFollow(false));
 $('recenter').onclick = () => setFollow(true);
 
 // ---------------------------------------------------------------- location sources
-let lastTs = 0, locFails = 0;
-
-async function pollPhone() {
-  try {
-    const j = await (await fetchT('/loc', 2500)).json();
-    locFails = 0;
-    if (sim) setStatus('Simulated drive', 'ok');
-    else if (!j.ok) setStatus('Waiting for iPhone GPS…', 'warn');
-    // A parked phone can go quiet for a while; only warn when the fix is properly old.
-    else if (j.age > 30) setStatus('No recent GPS fix on the iPhone', 'warn');
-    else setStatus('');
-    if (j.ok && j.ts !== lastTs) {
-      lastTs = j.ts;
-      onFix({ lat: j.lat, lng: j.lng, speed: j.speed, course: j.course, acc: j.acc, ts: j.ts, src: 'phone' });
-    }
-  } catch {
-    if (++locFails >= 3) setStatus('Lost connection to iPhone — is TeslaNav running and the hotspot on?', 'bad');
-  } finally {
-    setTimeout(pollPhone, 1000);
-  }
-}
-
 function useBrowserLocation() {
   if (!('geolocation' in navigator)) { source = 'none'; setStatus('No location source — open this page from the TeslaNav iPhone app', 'bad'); return; }
   source = 'browser';
-  setStatus('Using this browser’s location', 'warn');
   navigator.geolocation.watchPosition(g => {
     const c = g.coords;
     onFix({ lat: c.latitude, lng: c.longitude, speed: c.speed ?? -1, course: c.heading ?? -1, acc: c.accuracy, ts: g.timestamp, src: 'browser' });
@@ -379,18 +373,8 @@ function useBrowserLocation() {
   { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
 }
 
-/** Served by the TeslaNav app? Then /loc answers and the phone's GPS drives everything. */
-async function detectSource() {
-  try {
-    const res = await fetchT('/loc', 1500);
-    if (res.ok && 'ok' in await res.json()) {
-      source = 'phone';
-      show($('mirrorBtn'), true);
-      pollPhone();
-      if (store.get('mode', 'map') === 'mirror') setMode('mirror');
-      return;
-    }
-  } catch {}
+/** The Tesla browser shares the car's own GPS with web pages. */
+function detectSource() {
   useBrowserLocation();
 }
 
@@ -772,41 +756,158 @@ function toggleSim() {
 $('simBtn').onclick = toggleSim;
 
 // ---------------------------------------------------------------- mirror mode
-const img = $('mirrorImg');
-const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
-let statusTimer, mirrorLive = null;
+// The car's browser refuses private addresses, so the iPhone can't serve its screen over the
+// hotspot. Instead the broadcast extension sends H.264 video (or JPEGs) through a small
+// Cloudflare relay; this page decodes it with WebCodecs and draws it on a canvas.
+//
+// Binary messages: [kind:1][timestamp ms:4 BE][payload]  kind 1 = key frame, 2 = delta
+// frame (both Annex B H.264), 3 = JPEG. Text messages are small JSON control messages.
+const RELAY = 'wss://teslanav-relay.hakob-hakobyan173.workers.dev/ws';
+const canvas = $('mirrorCanvas'), ctx = canvas.getContext('2d');
+let ws = null, decoder = null, reconnectTimer = null;
+let rotation = 0, needKey = true, gotFrame = false, phoneOnline = false, decoderCodec = '';
+const wantsH264 = 'VideoDecoder' in window && 'EncodedVideoChunk' in window;
+
+const pairCode = () => store.get('pair', '');
+
+function mirrorHint(title) {
+  show($('mirrorHint'), !!title);
+  if (title) $('mirrorHintTitle').textContent = title;
+}
 
 function setMode(m) {
+  if (m === 'mirror' && !pairCode()) return askPair(() => setMode('mirror'));
   mode = m;
   store.set('mode', m);
   show($('mirror'), m === 'mirror');
-  clearInterval(statusTimer);
   if (m === 'mirror') {
     if ('speechSynthesis' in window) speechSynthesis.cancel();
-    mirrorLive = null;
-    img.src = '/mjpeg?t=' + Date.now();
-    pollStatus();
-    statusTimer = setInterval(pollStatus, 2000);
+    gotFrame = false;
+    mirrorHint('Connecting…');
+    mirrorConnect();
   } else {
-    img.src = BLANK;            // closes the stream so the phone stops sending
+    mirrorDisconnect();
     if (follow) followCar();
   }
 }
 
-async function pollStatus() {
-  try {
-    const j = await (await fetchT('/status', 1500)).json();
-    show($('mirrorHint'), !j.mirror);
-    // Broadcast just (re)started: reopen the stream so it doesn't sit on a stale frame.
-    if (j.mirror && mirrorLive === false) img.src = '/mjpeg?t=' + Date.now();
-    mirrorLive = j.mirror;
-  } catch {
-    show($('mirrorHint'), true);
+function mirrorConnect() {
+  mirrorDisconnect();
+  const sock = new WebSocket(`${RELAY}?room=${encodeURIComponent(pairCode())}&role=car`);
+  sock.binaryType = 'arraybuffer';
+  sock.onopen = () => sock.send(JSON.stringify({ type: 'want', format: wantsH264 ? 'h264' : 'jpeg' }));
+  sock.onmessage = e => typeof e.data === 'string' ? onControl(JSON.parse(e.data)) : onMedia(e.data);
+  sock.onclose = () => {
+    if (ws !== sock) return;
+    ws = null;
+    if (mode === 'mirror') {
+      mirrorHint('Reconnecting…');
+      reconnectTimer = setTimeout(mirrorConnect, 2000);
+    }
+  };
+  ws = sock;
+}
+
+function mirrorDisconnect() {
+  clearTimeout(reconnectTimer);
+  if (ws) { const old = ws; ws = null; old.close(); }
+  if (decoder) { try { decoder.close(); } catch {} decoder = null; }
+  decoderCodec = '';
+  needKey = true;
+}
+
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+
+function onControl(msg) {
+  if (msg.type === 'phone') {
+    phoneOnline = msg.online;
+    if (!msg.online) { gotFrame = false; mirrorHint('Waiting for the iPhone…'); }
+    else if (!gotFrame) mirrorHint('iPhone connected — waiting for the screen…');
+  } else if (msg.type === 'config') {
+    // A rotation-only update must not reset the decoder (that would ask for a key frame,
+    // and the phone answers key-frame requests with fresh frames, not a new config).
+    rotation = msg.rotation || 0;
+    if (wantsH264 && msg.codec && (msg.codec !== decoderCodec || !decoder)) configureDecoder(msg.codec);
   }
 }
-img.onerror = () => { if (mode === 'mirror') setTimeout(() => { if (mode === 'mirror') img.src = '/mjpeg?t=' + Date.now(); }, 1500); };
+
+async function configureDecoder(codec) {
+  const config = { codec, optimizeForLatency: true };
+  try {
+    const { supported } = await VideoDecoder.isConfigSupported(config);
+    if (!supported) throw new Error('unsupported');
+  } catch {
+    // This browser can't decode the stream: ask the phone for JPEGs instead.
+    return send({ type: 'want', format: 'jpeg' });
+  }
+  if (decoder) { try { decoder.close(); } catch {} }
+  decoder = new VideoDecoder({
+    output: frame => { draw(frame, frame.displayWidth, frame.displayHeight); frame.close(); },
+    error: () => { decoder = null; decoderCodec = ''; needKey = true; send({ type: 'keyframe' }); },
+  });
+  decoder.configure(config);
+  decoderCodec = codec;
+  needKey = true;
+  send({ type: 'keyframe' });
+}
+
+function onMedia(buf) {
+  const bytes = new Uint8Array(buf);
+  const kind = bytes[0];
+  const ts = new DataView(buf).getUint32(1);
+  const payload = bytes.subarray(5);
+  if (kind === 3) {
+    createImageBitmap(new Blob([payload], { type: 'image/jpeg' }))
+      .then(bmp => { draw(bmp, bmp.width, bmp.height); bmp.close(); })
+      .catch(() => {});
+    return;
+  }
+  if (!decoder || decoder.state !== 'configured') return;
+  if (needKey && kind !== 1) return;
+  // Falling behind: drop what's queued and start again from the next key frame.
+  if (decoder.decodeQueueSize > 6) { needKey = true; send({ type: 'keyframe' }); return; }
+  needKey = false;
+  try {
+    decoder.decode(new EncodedVideoChunk({ type: kind === 1 ? 'key' : 'delta', timestamp: ts * 1000, data: payload }));
+  } catch {
+    needKey = true; send({ type: 'keyframe' });
+  }
+}
+
+/** Draw a frame to fill the screen without cropping, honouring the phone's rotation. */
+function draw(src, w, h) {
+  const dpr = window.devicePixelRatio || 1;
+  const cw = Math.round(canvas.clientWidth * dpr), ch = Math.round(canvas.clientHeight * dpr);
+  if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+  const turned = rotation === 90 || rotation === 270;
+  const sw = turned ? h : w, sh = turned ? w : h;
+  const scale = Math.min(cw / sw, ch / sh);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cw, ch);
+  ctx.translate(cw / 2, ch / 2);
+  ctx.rotate(rotation * Math.PI / 180);
+  ctx.drawImage(src, -w * scale / 2, -h * scale / 2, w * scale, h * scale);
+  if (!gotFrame) { gotFrame = true; mirrorHint(''); }
+}
+
+function askPair(then) {
+  $('pairCode').value = pairCode();
+  show($('pair'), true);
+  $('pairCode').focus();
+  $('pairOk').onclick = () => {
+    const code = $('pairCode').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length !== 8) return toast('The code has 8 letters and digits');
+    store.set('pair', code);
+    show($('pair'), false);
+    if (then) then();
+  };
+}
+$('pairCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('pairOk').click(); });
+$('pairCancel').onclick = () => show($('pair'), false);
+$('pairBtn').onclick = () => { $('menu').classList.add('hidden'); askPair(() => { if (mode === 'mirror') mirrorConnect(); }); };
 $('mirrorBtn').onclick = () => setMode('mirror');
 $('mirrorBack').onclick = () => setMode('map');
+window.addEventListener('resize', () => { if (canvas.width) { canvas.width = 0; } });
 
 // ---------------------------------------------------------------- start
 // ?to=lat,lng[&name=…] opens straight into navigation (a shareable destination link);
@@ -816,6 +917,7 @@ dest = to.length === 2 && to.every(Number.isFinite)
   ? { lat: to[0], lng: to[1], name: params.get('name') || 'Destination' }
   : store.get('dest', null);      // otherwise resume navigation after a reload
 detectSource();
+if (store.get('mode', 'map') === 'mirror' && pairCode()) setMode('mirror');
 })();
 </script>
 </body>

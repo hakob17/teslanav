@@ -16,25 +16,27 @@
   </header>
 
   <h1>Privacy Policy</h1>
-  <p class="meta">Last updated: 28 September 2026</p>
+  <p class="meta">Last updated: 28 September 2026 (screen mirroring through the relay)</p>
 
-  <p>TeslaNav has no servers, no accounts, no analytics and no ads. The developer does not
-  collect, receive or store any of your data.</p>
+  <p>TeslaNav has no accounts, no analytics and no ads. The developer does not collect or
+  store any of your data.</p>
 
   <h2>Location</h2>
-  <p>TeslaNav reads your iPhone's location to show it on the navigation page in your car. It is
-  sent only over your iPhone's Personal Hotspot to the browser that opened the page — a direct,
-  local connection between your phone and your car. It never goes to the developer.</p>
+  <p>The navigation page in your car uses the car browser's own location, with your permission,
+  to show where you are and guide you. It stays in the browser and is never sent to the
+  developer. The iPhone app does not use your location.</p>
 
   <h2>Screen mirroring</h2>
-  <p>When you start a broadcast, images of your screen are passed from TeslaNav's broadcast
-  extension to the app on the same iPhone and streamed to the car's browser over the hotspot.
-  They are not recorded or sent anywhere else. Only the latest frame is kept, and it is deleted
-  when the broadcast stops.</p>
+  <p>When you start a broadcast and the car page is paired with your iPhone's code, your iPhone
+  screen is encoded as video and sent to the car through TeslaNav's relay, which runs on
+  Cloudflare. The relay only forwards the stream in real time between your phone and your car;
+  it does not record or store it. Nothing is sent while no car is watching. Anyone who knows
+  your 8-character pairing code could watch while you broadcast, so keep it private; you can
+  create a new code in the app at any time.</p>
 
   <h2>Maps, search and routes</h2>
-  <p>The page in your car loads map images and asks for search results and routes directly from
-  public OpenStreetMap-based services:</p>
+  <p>The page in your car is served by GitHub Pages and loads map images, search results and
+  routes directly from public OpenStreetMap-based services:</p>
   <ul>
     <li>Map images: OpenStreetMap tile servers (<a href="https://osmfoundation.org/wiki/Privacy_Policy">privacy policy</a>) or, if you choose it, Esri (<a href="https://www.esri.com/en-us/privacy/overview">privacy policy</a>).</li>
     <li>Place search: Nominatim, run by the OpenStreetMap Foundation.</li>

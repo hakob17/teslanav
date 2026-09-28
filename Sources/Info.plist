@@ -22,20 +22,6 @@
 	<string>1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_http._tcp</string>
-	</array>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>TeslaNav serves the navigation page to your car over the Personal Hotspot.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>TeslaNav keeps sending your position to the car while you use other apps or the phone is locked.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>TeslaNav sends your iPhone's GPS position to the navigation page open in your car's browser.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

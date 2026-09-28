@@ -7,19 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2A6A9C133F74EDEB81F9D0D5 /* WebServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB49A4654C6E86D04FFB403 /* WebServer.swift */; };
-		2E5294517E93BB97E23D104F /* FrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25BBBE86476F82E68A4E3280 /* FrameStore.swift */; };
-		4BE11E595FCD462FB83B0AEB /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AE92AB2D8FE3DEC48E622C /* LocationService.swift */; };
+		0AA414E21A97D68914D42795 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3A6711156CF731E22242B4F8 /* PrivacyInfo.xcprivacy */; };
+		0F46BC77533BDE1BF5C6C2B4 /* H264Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 806927CB44A2FA47DBAAB4F7 /* H264Encoder.swift */; };
 		6CFB74024FEFFEB238521C74 /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1023D9D97A6758AF26F701C2 /* SampleHandler.swift */; };
 		6E2C080D792E3DA0B82A690B /* TeslaNavApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3496833AB02377737A983AEE /* TeslaNavApp.swift */; };
 		76A4D028CEF35E9710C9E671 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE146D361FF7234DF247164D /* Assets.xcassets */; };
+		7C37B33EEB35996EB7690C00 /* RelayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3299F266D78E91C57407707E /* RelayClient.swift */; };
 		8060BF342120B4AA34AA5031 /* TeslaNavBroadcast.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5443EF84DD3F57963D8CEE9E /* TeslaNavBroadcast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		839A0064EA8C5E93A8C59FBC /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05810DEB1F991F0834EB93D6 /* Shared.swift */; };
 		943158A13B0E035E70C9D0DA /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05810DEB1F991F0834EB93D6 /* Shared.swift */; };
 		AED231609215C11B1A0D2C76 /* Tips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */; };
 		BBFC262D34112120BD604FE0 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9330B5A49F6C6C5F19A66B4A /* PrivacyInfo.xcprivacy */; };
 		D52496744DF0B30EA7F82F88 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 154592699269B3ED770CC48E /* ReplayKit.framework */; };
-		F7290839311C9F92DE33FE9F /* web in Resources */ = {isa = PBXBuildFile; fileRef = 7C80D76CC397D28CF31979FB /* web */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,15 +49,14 @@
 		05810DEB1F991F0834EB93D6 /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
 		1023D9D97A6758AF26F701C2 /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
 		154592699269B3ED770CC48E /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
-		25BBBE86476F82E68A4E3280 /* FrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameStore.swift; sourceTree = "<group>"; };
 		2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tips.swift; sourceTree = "<group>"; };
+		3299F266D78E91C57407707E /* RelayClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClient.swift; sourceTree = "<group>"; };
 		3496833AB02377737A983AEE /* TeslaNavApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaNavApp.swift; sourceTree = "<group>"; };
-		44AE92AB2D8FE3DEC48E622C /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		3A6711156CF731E22242B4F8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		5068E61A2925A0B2E312768C /* TeslaNav.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaNav.entitlements; sourceTree = "<group>"; };
 		5443EF84DD3F57963D8CEE9E /* TeslaNavBroadcast.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TeslaNavBroadcast.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		5CB49A4654C6E86D04FFB403 /* WebServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebServer.swift; sourceTree = "<group>"; };
 		79984F9C7632FB5B64460F41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		7C80D76CC397D28CF31979FB /* web */ = {isa = PBXFileReference; lastKnownFileType = folder; name = web; path = Resources/web; sourceTree = SOURCE_ROOT; };
+		806927CB44A2FA47DBAAB4F7 /* H264Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Encoder.swift; sourceTree = "<group>"; };
 		9330B5A49F6C6C5F19A66B4A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AD9B456FF1EAA06C72E6CB4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AF10002DA98A6A388B5A9C75 /* TeslaNavBroadcast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaNavBroadcast.entitlements; sourceTree = "<group>"; };
@@ -82,14 +80,11 @@
 			isa = PBXGroup;
 			children = (
 				CE146D361FF7234DF247164D /* Assets.xcassets */,
-				25BBBE86476F82E68A4E3280 /* FrameStore.swift */,
 				AD9B456FF1EAA06C72E6CB4E /* Info.plist */,
-				44AE92AB2D8FE3DEC48E622C /* LocationService.swift */,
 				9330B5A49F6C6C5F19A66B4A /* PrivacyInfo.xcprivacy */,
 				5068E61A2925A0B2E312768C /* TeslaNav.entitlements */,
 				3496833AB02377737A983AEE /* TeslaNavApp.swift */,
 				2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */,
-				5CB49A4654C6E86D04FFB403 /* WebServer.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -113,7 +108,10 @@
 		A6B6A803C06B0407FEB30A20 /* Broadcast */ = {
 			isa = PBXGroup;
 			children = (
+				806927CB44A2FA47DBAAB4F7 /* H264Encoder.swift */,
 				79984F9C7632FB5B64460F41 /* Info.plist */,
+				3A6711156CF731E22242B4F8 /* PrivacyInfo.xcprivacy */,
+				3299F266D78E91C57407707E /* RelayClient.swift */,
 				1023D9D97A6758AF26F701C2 /* SampleHandler.swift */,
 				AF10002DA98A6A388B5A9C75 /* TeslaNavBroadcast.entitlements */,
 			);
@@ -132,7 +130,6 @@
 		DD38D00EFA183CD42885DB28 = {
 			isa = PBXGroup;
 			children = (
-				7C80D76CC397D28CF31979FB /* web */,
 				A6B6A803C06B0407FEB30A20 /* Broadcast */,
 				9DC901DFA06EBF07E3745CDA /* Shared */,
 				63F9FE9F762B35C8646F53CA /* Sources */,
@@ -169,6 +166,7 @@
 			buildConfigurationList = E5DA1838AAE20E34C7B64D9D /* Build configuration list for PBXNativeTarget "TeslaNavBroadcast" */;
 			buildPhases = (
 				10D04DD31702D9E0A5DE7882 /* Sources */,
+				F2B5BA29422C7EE5D1E46D62 /* Resources */,
 				CD5227FC9560A061409FA66F /* Frameworks */,
 			);
 			buildRules = (
@@ -228,7 +226,14 @@
 			files = (
 				76A4D028CEF35E9710C9E671 /* Assets.xcassets in Resources */,
 				BBFC262D34112120BD604FE0 /* PrivacyInfo.xcprivacy in Resources */,
-				F7290839311C9F92DE33FE9F /* web in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F2B5BA29422C7EE5D1E46D62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0AA414E21A97D68914D42795 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +244,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F46BC77533BDE1BF5C6C2B4 /* H264Encoder.swift in Sources */,
+				7C37B33EEB35996EB7690C00 /* RelayClient.swift in Sources */,
 				6CFB74024FEFFEB238521C74 /* SampleHandler.swift in Sources */,
 				943158A13B0E035E70C9D0DA /* Shared.swift in Sources */,
 			);
@@ -248,12 +255,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2E5294517E93BB97E23D104F /* FrameStore.swift in Sources */,
-				4BE11E595FCD462FB83B0AEB /* LocationService.swift in Sources */,
 				839A0064EA8C5E93A8C59FBC /* Shared.swift in Sources */,
 				6E2C080D792E3DA0B82A690B /* TeslaNavApp.swift in Sources */,
 				AED231609215C11B1A0D2C76 /* Tips.swift in Sources */,
-				2A6A9C133F74EDEB81F9D0D5 /* WebServer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -319,7 +323,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SXEFA57E5G;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -429,7 +433,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = SXEFA57E5G;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

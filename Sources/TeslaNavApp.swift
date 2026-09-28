@@ -1,7 +1,5 @@
 import SwiftUI
 import ReplayKit
-import CoreLocation
-import Combine
 
 @main
 struct TeslaNavApp: App {
@@ -21,29 +19,17 @@ struct TeslaNavApp: App {
 
 // MARK: - Model
 
+/// What the app shows: the pairing code, and whether a broadcast is running and watched.
+/// The broadcast extension does the actual streaming; it reports back through the App Group.
 @MainActor
 final class AppModel: ObservableObject {
-    let location = LocationService()
-    let frames = FrameStore()
-    let server: WebServer
-
-    @Published private(set) var serverReady = false
-    @Published private(set) var addresses: [NetworkInfo.Address] = []
+    @Published private(set) var pairCode = Shared.pairCode
     @Published private(set) var mirrorLive = false
-    @Published private(set) var lastCarRequest: Date?
-    @Published private(set) var streamCount = 0
-    @Published private(set) var now = Date()
+    @Published private(set) var carsWatching = 0
 
     private var timer: Timer?
-    private var locationChanges: AnyCancellable?
 
     init() {
-        server = WebServer(location: location, frames: frames)
-        // Views read GPS state through the model, so re-render when it changes.
-        locationChanges = location.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
-        location.start()
-        frames.start()
-        server.start()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
@@ -51,58 +37,16 @@ final class AppModel: ObservableObject {
     }
 
     func refresh() {
-        now = Date()
-        serverReady = server.isReady
-        addresses = NetworkInfo.ipv4Addresses()
-        mirrorLive = frames.isLive
-        lastCarRequest = server.lastRequest
-        streamCount = server.streamCount
-    }
-
-    func becameActive() {
-        server.ensureRunning()
-        location.start()
-        refresh()
-    }
-
-    /// The address to type into the car. The hotspot bridge is almost always 172.20.10.1,
-    /// but only shows up once a device has joined, so fall back to that.
-    var carURL: String {
-        let ip = addresses.first(where: \.isHotspot)?.ip ?? "172.20.10.1"
-        return "http://\(ip):\(WebServer.port)"
-    }
-
-    var hotspotConnected: Bool { addresses.contains(where: \.isHotspot) }
-}
-
-// MARK: - Hotspot IP lookup
-
-enum NetworkInfo {
-    struct Address: Hashable {
-        let interface: String
-        let ip: String
-        /// iOS puts Personal Hotspot clients on a `bridge…` interface.
-        var isHotspot: Bool { interface.hasPrefix("bridge") }
-    }
-
-    static func ipv4Addresses() -> [Address] {
-        var list: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&list) == 0, let first = list else { return [] }
-        defer { freeifaddrs(list) }
-
-        var result: [Address] = []
-        for pointer in sequence(first: first, next: { $0.pointee.ifa_next }) {
-            let entry = pointer.pointee
-            guard let addr = entry.ifa_addr, addr.pointee.sa_family == UInt8(AF_INET),
-                  entry.ifa_flags & UInt32(IFF_UP) != 0 else { continue }
-            let name = String(cString: entry.ifa_name)
-            guard name.hasPrefix("bridge") || name.hasPrefix("en") else { continue }
-            var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-            guard getnameinfo(addr, socklen_t(addr.pointee.sa_len), &host, socklen_t(host.count),
-                              nil, 0, NI_NUMERICHOST) == 0 else { continue }
-            result.append(Address(interface: name, ip: String(cString: host)))
+        let beat = Shared.heartbeatURL.flatMap {
+            (try? FileManager.default.attributesOfItem(atPath: $0.path))?[.modificationDate] as? Date
         }
-        return result.sorted { ($0.isHotspot ? 0 : 1, $0.interface) < ($1.isHotspot ? 0 : 1, $1.interface) }
+        mirrorLive = beat.map { Date().timeIntervalSince($0) < Shared.heartbeatTimeout } ?? false
+        carsWatching = mirrorLive ? Shared.carsWatching : 0
+    }
+
+    /// A new code disconnects any car paired with the old one (after the next broadcast).
+    func newPairCode() {
+        pairCode = Shared.newPairCode()
     }
 }
 
@@ -111,7 +55,6 @@ enum NetworkInfo {
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var tips: Tips
-    private var location: LocationService { model.location }
     @Environment(\.scenePhase) private var scenePhase
     @State private var copied = false
     private let broadcast = BroadcastTrigger()
@@ -121,12 +64,11 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("TeslaNav").font(.largeTitle.bold())
-                    Text("Navigation on the car screen, served from this iPhone.")
+                    Text("Navigation and your iPhone screen on the car's display.")
                         .foregroundStyle(.secondary)
                 }
 
-                urlCard
-                statusCard
+                carPageCard
                 mirrorCard
                 howToCard
                 supportCard
@@ -135,24 +77,22 @@ struct ContentView: View {
         }
         .background(BroadcastPicker(trigger: broadcast).frame(width: 1, height: 1).opacity(0.01), alignment: .topLeading)
         .onChange(of: scenePhase) { phase in
-            if phase == .active { model.becameActive() }
+            if phase == .active { model.refresh() }
         }
     }
 
-    private var urlCard: some View {
+    private var carPageCard: some View {
         Card {
-            Text("Open in the Tesla browser").font(.headline)
-            Text(model.carURL)
-                .font(.system(.title2, design: .monospaced).bold())
+            Text("Open in the car's browser").font(.headline)
+            Text(Shared.carPageURL)
+                .font(.system(.title3, design: .monospaced).bold())
                 .foregroundStyle(Color.accentColor)
                 .textSelection(.enabled)
-            if !model.hotspotConnected && !carConnected {
-                Label("Turn on Personal Hotspot and connect the car to it.", systemImage: "personalhotspot")
-                    .font(.subheadline)
-                    .foregroundStyle(.orange)
-            }
+            Text("The map, search and turn-by-turn directions run in the car and use its own GPS. Bookmark the page with ☆.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             Button {
-                UIPasteboard.general.string = model.carURL
+                UIPasteboard.general.string = "https://" + Shared.carPageURL
                 copied = true
             } label: {
                 Label(copied ? "Copied" : "Copy address", systemImage: copied ? "checkmark" : "doc.on.doc")
@@ -161,30 +101,24 @@ struct ContentView: View {
         }
     }
 
-    private var statusCard: some View {
-        Card {
-            Text("Status").font(.headline)
-            StatusRow(title: "Server", ok: model.serverReady,
-                      detail: model.serverReady ? "Listening on :\(WebServer.port)" : "Starting…")
-            StatusRow(title: "iPhone GPS", ok: gpsOK, detail: gpsDetail)
-            StatusRow(title: "Car", ok: carConnected, detail: carDetail)
-            StatusRow(title: "Screen mirror", ok: model.mirrorLive,
-                      detail: model.mirrorLive ? "Broadcasting · \(model.streamCount) viewer(s)" : "Off")
-            if location.authorization == .denied || location.authorization == .restricted {
-                Button("Allow location in Settings") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-    }
-
     private var mirrorCard: some View {
         Card {
             Text("Mirror mode").font(.headline)
-            Text("Shows this whole screen in the car, so you can drive with Yandex Navigator, Google Maps or Waze and their live traffic. Start it here, then tap “Phone screen” in the car.")
+            Text("Shows this whole screen in the car, so you can drive with Yandex Navigator, Google Maps or Waze and their live traffic. Tap “Phone screen” on the car page and enter this code once:")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+            HStack {
+                Text(Shared.formatted(model.pairCode))
+                    .font(.system(size: 34, weight: .bold, design: .monospaced))
+                    .textSelection(.enabled)
+                Spacer()
+                Button("New code") { model.newPairCode() }
+                    .buttonStyle(.bordered)
+                    .disabled(model.mirrorLive)
+            }
+            StatusRow(title: "Broadcast", ok: model.mirrorLive, detail: model.mirrorLive ? "On" : "Off")
+            StatusRow(title: "Car watching", ok: model.carsWatching > 0,
+                      detail: model.carsWatching > 0 ? "Yes" : (model.mirrorLive ? "Waiting for the car" : "—"))
             Button {
                 broadcast.fire()
             } label: {
@@ -195,6 +129,9 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
             .tint(model.mirrorLive ? .red : .accentColor)
             .controlSize(.large)
+            Text("The screen is sent over the internet through TeslaNav's relay only while the car is watching (about 0.5 GB per hour). Nothing is stored.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -202,9 +139,9 @@ struct ContentView: View {
         Card {
             Text("How to use").font(.headline)
             VStack(alignment: .leading, spacing: 8) {
-                Text("1. Turn on Personal Hotspot and join it from the car's Wi‑Fi.")
-                Text("2. Open the address above in the Tesla browser and bookmark it.")
-                Text("3. Search a destination on the car screen and drive. You can switch apps or lock the phone — TeslaNav keeps serving.")
+                Text("1. Open the address above in the car's browser and bookmark it. It works on the car's own connection or your iPhone's hotspot.")
+                Text("2. Search a destination on the car screen and drive.")
+                Text("3. For live traffic, tap Start Broadcast here, open your navigation app, and tap “Phone screen” in the car.")
             }
             .font(.subheadline)
             .foregroundStyle(.secondary)
@@ -238,33 +175,6 @@ struct ContentView: View {
                 Text(failure).font(.footnote).foregroundStyle(.orange)
             }
         }
-    }
-
-    private var gpsOK: Bool {
-        guard let fix = location.lastFix else { return false }
-        return model.now.timeIntervalSince(fix.timestamp) < 10
-    }
-
-    private var gpsDetail: String {
-        switch location.authorization {
-        case .denied, .restricted: return "Location access denied"
-        case .notDetermined: return "Waiting for permission"
-        default: break
-        }
-        guard let fix = location.lastFix else { return "Searching…" }
-        let age = Int(model.now.timeIntervalSince(fix.timestamp))
-        return "±\(Int(fix.horizontalAccuracy)) m · \(age) s ago"
-    }
-
-    private var carConnected: Bool {
-        guard let last = model.lastCarRequest else { return false }
-        return model.now.timeIntervalSince(last) < 5
-    }
-
-    private var carDetail: String {
-        guard let last = model.lastCarRequest else { return "Not connected yet" }
-        let age = Int(model.now.timeIntervalSince(last))
-        return age < 5 ? "Connected" : "Last seen \(age) s ago"
     }
 }
 

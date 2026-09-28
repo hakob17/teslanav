@@ -17,27 +17,31 @@
   </header>
 
   <h1>Navigation on your car's big screen</h1>
-  <p>TeslaNav turns your iPhone into a small navigation server. Turn on Personal Hotspot, open one
-  bookmark in the car's browser, and get a live map with search, turn-by-turn directions, voice
-  prompts and arrival time — driven by your iPhone's GPS. No cloud, no account.</p>
+  <p>Open one page in the car's browser and get a live night map with search, turn-by-turn
+  directions, voice prompts and arrival time, using the car's own GPS. Want live traffic from
+  your usual navigation app? The TeslaNav iPhone app mirrors your whole screen to the car.</p>
+
+  <p><a href="car/"><b>Open the car page →</b></a> &nbsp;(<code>hakob17.github.io/teslanav/car</code>)</p>
 
   <h2>Getting started</h2>
   <ol>
-    <li>On the iPhone, turn on <b>Personal Hotspot</b>, and join it from the car's Wi-Fi settings.</li>
-    <li>Open TeslaNav once and allow location access.</li>
-    <li>In the car's browser, open <b>http://172.20.10.1:8080</b> and bookmark it.</li>
-    <li>Search a destination on the car screen and drive. You can switch apps or lock the phone.</li>
+    <li>In the car's browser, open <b>hakob17.github.io/teslanav/car</b> and bookmark it with ☆.</li>
+    <li>Allow location when asked, search a destination and drive.</li>
   </ol>
 
   <h2>Mirror mode</h2>
-  <p>Want live traffic from your favourite navigation app? Tap <b>Start Broadcast</b> in TeslaNav,
-  then <b>Phone screen</b> on the car page. Your whole iPhone screen appears in the car.</p>
+  <ol>
+    <li>Open TeslaNav on the iPhone and tap <b>Start Broadcast</b>.</li>
+    <li>On the car page tap <b>Phone screen</b> and enter the 8-character code shown in the app (only the first time).</li>
+    <li>Switch to your navigation app on the phone. The car shows your screen within a second or two.</li>
+  </ol>
+  <p>Mirroring uses mobile data while the car is watching (roughly 0.5 GB per hour).</p>
 
   <h2>Troubleshooting</h2>
   <ul>
-    <li><b>The page doesn't load:</b> check the car is joined to your iPhone's hotspot and TeslaNav has been opened since the phone restarted.</li>
-    <li><b>“Lost connection to iPhone”:</b> open TeslaNav on the phone again; iOS may have closed it.</li>
-    <li><b>No search results or map:</b> the car uses your iPhone's mobile data through the hotspot — check you have signal.</li>
+    <li><b>No location on the map:</b> allow location for the page in the car's browser.</li>
+    <li><b>“Waiting for the iPhone…”:</b> check the broadcast is running and the code in the car matches the app (menu ⋯ → Phone code).</li>
+    <li><b>No map or search:</b> the car needs internet — its own connection or your iPhone's hotspot.</li>
   </ul>
 
   <div class="panel">

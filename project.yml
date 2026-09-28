@@ -9,7 +9,7 @@ settings:
     DEVELOPMENT_TEAM: SXEFA57E5G
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "3"
+    CURRENT_PROJECT_VERSION: "4"
 targets:
   # The app: HTTP server on :8080, GPS, and the car web page.
   TeslaNav:
@@ -18,10 +18,6 @@ targets:
     sources:
       - Sources
       - Shared
-      # Served as-is to the Tesla browser; kept as a folder so paths match URLs.
-      - path: Resources/web
-        type: folder
-        buildPhase: resources
     dependencies:
       - target: TeslaNavBroadcast
     entitlements:
@@ -36,17 +32,6 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        # Location in the background is what keeps the server alive while
-        # another app is in front or the phone is locked.
-        UIBackgroundModes: [location]
-        NSLocationWhenInUseUsageDescription: TeslaNav sends your iPhone's GPS position to the
-          navigation page open in your car's browser.
-        NSLocationAlwaysAndWhenInUseUsageDescription: TeslaNav keeps sending your position to
-          the car while you use other apps or the phone is locked.
-        NSLocalNetworkUsageDescription: TeslaNav serves the navigation page to your car over
-          the Personal Hotspot.
-        # Must list the service WebServer advertises, or iOS rejects the advertisement.
-        NSBonjourServices: [_http._tcp]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hakobhakobyan.teslanav
