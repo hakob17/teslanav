@@ -17,6 +17,7 @@
 		839A0064EA8C5E93A8C59FBC /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05810DEB1F991F0834EB93D6 /* Shared.swift */; };
 		943158A13B0E035E70C9D0DA /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05810DEB1F991F0834EB93D6 /* Shared.swift */; };
 		AED231609215C11B1A0D2C76 /* Tips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */; };
+		BBFC262D34112120BD604FE0 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9330B5A49F6C6C5F19A66B4A /* PrivacyInfo.xcprivacy */; };
 		D52496744DF0B30EA7F82F88 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 154592699269B3ED770CC48E /* ReplayKit.framework */; };
 		F7290839311C9F92DE33FE9F /* web in Resources */ = {isa = PBXBuildFile; fileRef = 7C80D76CC397D28CF31979FB /* web */; };
 /* End PBXBuildFile section */
@@ -58,6 +59,7 @@
 		5CB49A4654C6E86D04FFB403 /* WebServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebServer.swift; sourceTree = "<group>"; };
 		79984F9C7632FB5B64460F41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7C80D76CC397D28CF31979FB /* web */ = {isa = PBXFileReference; lastKnownFileType = folder; name = web; path = Resources/web; sourceTree = SOURCE_ROOT; };
+		9330B5A49F6C6C5F19A66B4A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AD9B456FF1EAA06C72E6CB4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AF10002DA98A6A388B5A9C75 /* TeslaNavBroadcast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaNavBroadcast.entitlements; sourceTree = "<group>"; };
 		B7F4628BA147FB28CBE756AB /* TeslaNav.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TeslaNav.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -83,6 +85,7 @@
 				25BBBE86476F82E68A4E3280 /* FrameStore.swift */,
 				AD9B456FF1EAA06C72E6CB4E /* Info.plist */,
 				44AE92AB2D8FE3DEC48E622C /* LocationService.swift */,
+				9330B5A49F6C6C5F19A66B4A /* PrivacyInfo.xcprivacy */,
 				5068E61A2925A0B2E312768C /* TeslaNav.entitlements */,
 				3496833AB02377737A983AEE /* TeslaNavApp.swift */,
 				2FBF71DBCB3F51DB0EF8F7BB /* Tips.swift */,
@@ -224,6 +227,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				76A4D028CEF35E9710C9E671 /* Assets.xcassets in Resources */,
+				BBFC262D34112120BD604FE0 /* PrivacyInfo.xcprivacy in Resources */,
 				F7290839311C9F92DE33FE9F /* web in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
