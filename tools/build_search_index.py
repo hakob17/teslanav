@@ -52,7 +52,10 @@ SOCKETS = {"type2": "Type 2", "type2_combo": "CCS2", "chademo": "CHAdeMO", "gb_t
 
 
 def operator_name(raw):
-    return OPERATORS.get((raw or "").strip().lower(), (raw or "").strip())
+    raw = (raw or "").strip()
+    if raw.lower() in ("(unknown operator)", "unknown", "(business owner at location)"):
+        return ""
+    return OPERATORS.get(raw.lower(), raw)
 
 
 def open_charge_map(key):
