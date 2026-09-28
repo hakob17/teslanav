@@ -9,7 +9,7 @@ settings:
     DEVELOPMENT_TEAM: SXEFA57E5G
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "2"
+    CURRENT_PROJECT_VERSION: "3"
 targets:
   # The app: HTTP server on :8080, GPS, and the car web page.
   TeslaNav:
