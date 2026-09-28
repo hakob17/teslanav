@@ -325,6 +325,7 @@ function vectorMap() {
     highway_path: ['line-color', '#2a3140'], highway_minor: ['line-color', '#3a4353'],
     highway_major_casing: ['line-color', '#262c36'], highway_major_inner: ['line-color', '#5d6879'], highway_major_subtle: ['line-color', '#4a5465'],
     highway_motorway_casing: ['line-color', '#3a2f1c'], highway_motorway_inner: ['line-color', '#9a7b3f'], highway_motorway_subtle: ['line-color', '#6d5a33'],
+    'aeroway-runway': ['line-color', '#2c3340'], 'aeroway-taxiway': ['line-color', '#232933'], 'aeroway-area': ['fill-color', '#161b22'],
     railway: ['line-color', '#343a44'], railway_minor: ['line-color', '#2c323b'], railway_transit: ['line-color', '#2c323b'],
     highway_name_other: ['text-color', '#b9c2cf'], highway_name_motorway: ['text-color', '#e0cf9f'], water_name: ['text-color', '#6f8fb5'],
   };
@@ -339,7 +340,15 @@ function vectorMap() {
       try { map.setPaintProperty(l.id, 'text-halo-color', '#10141a'); map.setPaintProperty(l.id, 'text-halo-width', 1.4); } catch {}
     }
   }
-  map.on('style.load', () => { tuneNight(); addOverlays(); });
+  // Street labels: the Latin name alone; "ARAM STREET Արամ փողոց" side by side is unreadable at speed.
+  function latinStreetLabels() {
+    for (const id of ['highway_name_other', 'highway_name_major', 'road_label', 'highway-name-minor', 'highway-name-major']) {
+      if (map.getLayer(id)) try {
+        map.setLayoutProperty(id, 'text-field', ['coalesce', ['get', 'name:latin'], ['get', 'name_en'], ['get', 'name']]);
+      } catch {}
+    }
+  }
+  map.on('style.load', () => { tuneNight(); latinStreetLabels(); addOverlays(); });
 
   const carEl = document.createElement('div');
   carEl.className = 'car gl'; carEl.innerHTML = CAR_SVG;
@@ -914,6 +923,14 @@ function setRoute(r, d) {
   show($('search'), false); show($('banner'), true); show($('trip'), true);
   if (sim) sim.along = 0;
   if (pos) navUpdate();
+  else {
+    // No GPS fix yet: show the first turn and the whole trip until one arrives.
+    let j = 1;
+    while (j < r.steps.length - 1 && !important(r.steps[j])) j++;
+    const first = r.steps[Math.min(j, r.steps.length - 1)];
+    renderBanner(first, first.start, null);
+    renderTrip(r.total, r.duration);
+  }
 }
 
 function endRoute() {
@@ -1035,6 +1052,29 @@ function renderTrip(remain, secs) {
 }
 
 // ---------------------------------------------------------------- instructions
+/** Armenian → readable Latin for street names in instructions and speech ("Վազգեն Սարգսյանի փողոց" → "Vazgen Sargsyani Poghots"). */
+const HY_READ = { 'ա':'a','բ':'b','գ':'g','դ':'d','ե':'e','զ':'z','է':'e','ը':'y','թ':'t','ժ':'zh','ի':'i','լ':'l','խ':'kh','ծ':'ts',
+  'կ':'k','հ':'h','ձ':'dz','ղ':'gh','ճ':'ch','մ':'m','յ':'y','ն':'n','շ':'sh','ո':'o','չ':'ch','պ':'p','ջ':'j','ռ':'r','ս':'s',
+  'վ':'v','տ':'t','ր':'r','ց':'ts','ւ':'v','փ':'p','ք':'k','և':'ev','օ':'o','ֆ':'f' };
+const HY_TYPES = { 'փողոց': 'Street', 'պողոտա': 'Avenue', 'խճուղի': 'Highway', 'մայրուղի': 'Highway', 'նրբանցք': 'Lane',
+  'հրապարակ': 'Square', 'թաղամաս': 'District', 'փակուղի': 'Dead End', 'կամուրջ': 'Bridge', 'զբոսայգի': 'Park' };
+function readable(name) {
+  if (!name || !/[\u0531-\u0587]/.test(name)) return name;
+  // "Սարգսյանի փողոց" is "Sargsyan's street": drop the possessive -ի and translate the street word.
+  const parts = name.replace(/[\u200b-\u200f]/g, '').trim().split(/\s+/);
+  const type = HY_TYPES[parts[parts.length - 1].toLowerCase()];
+  if (type) {
+    parts.pop();
+    // Not for "Երևան-Գյումրի մայրուղի": a road between two towns, and Gyumri really ends in -ի.
+    if (parts.length && !parts[parts.length - 1].includes('-')) parts[parts.length - 1] = parts[parts.length - 1].replace(/ի$/, '');
+  }
+  return parts.join(' ').split(/(\s+|-)/).map(w => {
+    const lower = w.toLowerCase().replace(/ու/g, '\u0000').replace(/^ե/, 'ye').replace(/^ո(?!\u0000)/, 'vo');
+    const latin = lower.replace(/[\u0561-\u0587]/g, ch => HY_READ[ch] ?? ch).replace(/\u0000/g, 'u');
+    return latin.charAt(0).toUpperCase() + latin.slice(1);
+  }).join('') + (type ? ' ' + type : '');
+}
+
 const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
 function side(mod) { return mod.includes('left') ? 'left' : mod.includes('right') ? 'right' : 'straight'; }
 function turnWord(mod) {
@@ -1045,7 +1085,7 @@ function turnWord(mod) {
 function compass(b) { return ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'][Math.round(b / 45) % 8]; }
 
 function instruction(s) {
-  const road = s.name || s.ref;
+  const road = readable(s.name) || s.ref;
   const onto = road ? ` onto ${road}` : '';
   switch (s.type) {
     case 'depart': return `Head ${compass(s.bearingAfter || 0)}` + (road ? ` on ${road}` : '');

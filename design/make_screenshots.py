@@ -87,19 +87,28 @@ def car_slide(name, raw, title, sub, callouts, labels):
 
 BANNER, TRIP = (16, 16, 496, 222), (16, 1080, 496, 1172)
 car_slide("1-navigation", "nav.png", "Turn-by-turn on your car's big screen",
-          "Your iPhone's GPS drives a live map in the car's browser.",
-          [(BANNER, 1000), (TRIP, 1000)], ["Voice prompts", "Rerouting", "ETA"])
-car_slide("2-route", "overview.png", "See the whole route, then just drive",
+          "A heading-up 3D map with voice prompts, using the car's own GPS.",
+          [(BANNER, 1000), (TRIP, 1000)], ["Heading-up", "Voice", "Rerouting", "ETA"])
+car_slide("2-search", "search.png", "Finds places the way you type them",
+          "Type in English, Russian or Armenian: kaskad, cascade or Каскад all find the Cascade.",
+          [((16, 16, 496, 700), 900)], ["Places", "Streets", "Addresses"])
+car_slide("3-route", "overview.png", "See the whole route, then just drive",
           "Arrival time, distance and the next turn, always in view.",
           [((16, 16, 496, 138), 1000), (TRIP, 1000)], ["Route overview", "Night map"])
-car_slide("3-search", "search.png", "Search anywhere, nearby first",
-          "Places and addresses, straight from the car screen.",
-          [((16, 16, 496, 330), 1000)], ["Places", "Addresses", "Coordinates"])
 
-# The iPhone app itself, in a phone-shaped frame.
+# The iPhone app: mirroring.
 img = background()
-y = headline(img, "No cloud. No account.", "Turn on Personal Hotspot and open one bookmark in the car. Mirror your whole screen when you want live traffic.")
+y = headline(img, "Live traffic? Mirror your iPhone", "Use Yandex, Google Maps or Waze on the car screen. Pair once with a code.")
 phone = Image.open(f"{RAW}/phone.png").convert("RGB").crop((0, 0, 1320, 2380))
 place(img, phone, 1040, y + 90, 100, bezel=28)
-img.save(f"{OUT}/4-iphone.png")
+img.save(f"{OUT}/4-mirror.png")
+
+car_slide("5-chargers", "chargers.png", "EV chargers on the map",
+          "Tap a charger to see its connectors and drive there.",
+          [((380, 150, 1540, 900), 1100)], ["Free", "No account", "No ads"])
+
+# 6.5" copies (1284×2778): App Store Connect asks for this size too.
+os.makedirs("design/appstore-6.5", exist_ok=True)
+for f in sorted(os.listdir(OUT)):
+    Image.open(f"{OUT}/{f}").convert("RGB").resize((1284, 2790), Image.LANCZOS).crop((0, 6, 1284, 2784)).save(f"design/appstore-6.5/{f}")
 print(sorted(os.listdir(OUT)))
