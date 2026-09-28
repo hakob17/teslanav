@@ -162,6 +162,7 @@ body.navigating #status{bottom:130px}
   <button id="testVoice">Test voice</button>
   <button id="styleBtn"></button>
   <button id="engineBtn"></button>
+  <button id="chargersBtn"></button>
   <button id="simBtn">Simulate drive</button>
   <button id="pairBtn">📱  Phone code</button>
 </div>
@@ -307,7 +308,13 @@ function vectorMap() {
                    paint: { 'line-color': '#0b2a57', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 7, 16, 16] } });
     map.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' },
                    paint: { 'line-color': '#3e8bff', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 9] } });
+    map.addSource('chargers', { type: 'geojson', data: chargerData });
+    map.addLayer({ id: 'chargers', type: 'circle', source: 'chargers',
+                   paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 15, 9], 'circle-color': '#2fbf71',
+                            'circle-stroke-color': '#fff', 'circle-stroke-width': 2 } });
   }
+  let chargerData = empty, onCharger = null;
+  map.on('click', 'chargers', e => { const f = e.features[0]; if (f && onCharger) onCharger(JSON.parse(f.properties.c)); });
   // OpenFreeMap's dark style is very low-contrast; on a car screen in daylight the roads vanish.
   // Lift roads, labels and land a few steps while keeping it a night map.
   const NIGHT = {
@@ -394,6 +401,12 @@ function vectorMap() {
       map.getSource('route')?.setData(routeData);
     },
     clearRoute() { routeData = empty; map.getSource('route')?.setData(empty); },
+    setChargers(list, onTap) {
+      onCharger = onTap;
+      chargerData = { type: 'FeatureCollection', features: list.map(c => ({ type: 'Feature',
+        properties: { c: JSON.stringify(c) }, geometry: { type: 'Point', coordinates: [c.lng, c.lat] } })) };
+      map.getSource('chargers')?.setData(chargerData);
+    },
     setDest(p) { destM.setLngLat([p.lng, p.lat]).addTo(map); },
     clearDest() { destM.remove(); },
     popup(p, el) { popup?.remove(); popup = new maplibregl.Popup({ closeButton: false }).setLngLat([p.lng, p.lat]).setDOMContent(el).addTo(map); },
@@ -431,6 +444,7 @@ function classicMap() {
   const casing = L.polyline([], { color: '#0b2a57', weight: 14, opacity: 0.9, interactive: false });
   const line = L.polyline([], { color: '#3e8bff', weight: 8, opacity: 1, interactive: false });
   let popup = null;
+  const chargerLayer = L.layerGroup().addTo(map);
 
   return {
     kind: 'classic', canRotate: false,
@@ -463,6 +477,11 @@ function classicMap() {
     setAcc(p, r) { if (!map.hasLayer(acc)) acc.addTo(map); acc.setLatLng([p.lat, p.lng]).setRadius(r); },
     setRoute(points) { const ll = points.map(p => [p.lat, p.lng]); casing.setLatLngs(ll).addTo(map); line.setLatLngs(ll).addTo(map); },
     clearRoute() { casing.remove(); line.remove(); },
+    setChargers(list, onTap) {
+      chargerLayer.clearLayers();
+      list.forEach(c => L.circleMarker([c.lat, c.lng], { radius: 7, color: '#fff', weight: 2, fillColor: '#2fbf71', fillOpacity: 1 })
+        .on('click', () => onTap(c)).addTo(chargerLayer));
+    },
     setDest(p) { destM.setLatLng([p.lat, p.lng]).addTo(map); },
     clearDest() { destM.remove(); },
     popup(p, el) { popup = L.popup({ closeButton: false }).setLatLng([p.lat, p.lng]).setContent(el).openOn(map); },
@@ -615,11 +634,18 @@ async function search() {
 
   const c = pos || M.center();
   const seq = ++searchSeq;
+  // The offline index answers instantly; Photon's online results are added below it.
+  let local = [];
+  try { local = await searchLocal(text, c); } catch {}
+  if (seq !== searchSeq) return;
+  if (local.length) renderResults(local);
   try {
-    const items = await searchPhoton(text, c);
+    const online = await searchPhoton(text, c);
     if (seq !== searchSeq) return;
-    renderResults(items, items.length ? '' : 'Nothing found');
+    const merged = local.concat(online.filter(o => !local.some(l => dist(l, o) < 60))).slice(0, 10);
+    renderResults(merged, merged.length ? '' : 'Nothing found');
   } catch {
+    if (local.length) return;
     try {
       const items = await searchNominatim(text, c);
       if (seq === searchSeq) renderResults(items, items.length ? '' : 'Nothing found');
@@ -627,6 +653,141 @@ async function search() {
       if (seq === searchSeq) renderResults([], 'Search failed — no internet?');
     }
   }
+}
+
+// ---------------------------------------------------------------- offline search (Armenia)
+// data/am-search.json is built from OpenStreetMap by tools/build_search_index.py. Every name
+// and every query goes through fold(), which transliterates Armenian and Cyrillic to Latin and
+// merges spelling variants, so "kaskad", "Каскад", "Կասկադ" and "cascade" all meet.
+const ARMENIA = { s: 38.7, n: 41.4, w: 43.3, e: 46.8 };
+const inArmenia = p => p.lat > ARMENIA.s && p.lat < ARMENIA.n && p.lng > ARMENIA.w && p.lng < ARMENIA.e;
+const HY = { 'ա':'a','բ':'b','գ':'g','դ':'d','ե':'e','զ':'z','է':'e','ը':'e','թ':'t','ժ':'zh','ի':'i','լ':'l','խ':'kh','ծ':'ts',
+  'կ':'k','հ':'h','ձ':'dz','ղ':'gh','ճ':'ch','մ':'m','յ':'y','ն':'n','շ':'sh','ո':'o','չ':'ch','պ':'p','ջ':'j','ռ':'r','ս':'s',
+  'վ':'v','տ':'t','ր':'r','ց':'ts','ւ':'v','փ':'p','ք':'k','և':'ev','օ':'o','ֆ':'f' };
+const RU = { 'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'i','к':'k','л':'l','м':'m',
+  'н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'sh','ъ':'','ы':'y',
+  'ь':'','э':'e','ю':'yu','я':'ya' };
+
+/** Folds a name or query to a spelling-insensitive Latin "sound key". */
+function fold(text) {
+  // Drop accents and invisible marks (OSM names sometimes carry a left-to-right mark mid-word).
+  let t = text.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f\u200b-\u200f\u00ad\u2060]/g, '').replace(/ու/g, 'u');
+  t = t.replace(/[\u0561-\u0587]/g, ch => HY[ch] ?? ch).replace(/[\u0430-\u044f\u0451]/g, ch => RU[ch] ?? ch);
+  t = t.replace(/x/g, 'kh').replace(/tch/g, 'ch').replace(/ch/g, 'C').replace(/sh/g, 'S').replace(/zh/g, 'Z')
+       .replace(/kh/g, 'H').replace(/gh/g, 'H').replace(/ts|tz/g, 'T').replace(/dz/g, 'D').replace(/ph/g, 'p')
+       .replace(/th/g, 't').replace(/ck/g, 'k').replace(/c/g, 'k').replace(/q/g, 'k').replace(/w/g, 'v')
+       .replace(/y/g, 'i').replace(/h/g, 'H').replace(/ou/g, 'u');
+  return t.split(/[^a-zA-Z0-9]+/).filter(Boolean)
+          // Yerevan/Erevan; doubled letters; English silent final e (Cascade → kaskad).
+          .map(w => w.replace(/^ie/, 'e').replace(/(.)\1+/g, '$1').replace(/^(.{4,}[^aeiou])e$/, '$1'));
+}
+// Words that say what kind of thing it is, not which one ("street", "улица", "փողոց"...).
+const STOP = new Set(['street', 'st', 'str', 'avenue', 'ave', 'road', 'rd', 'lane', 'square', 'district', 'ulitsa', 'ul',
+  'prospekt', 'pr', 'ploshad', 'poghots', 'poghota', 'poxoc', 'poghoc', 'taghamas', 'nrbanTsk', 'hraparak', 'mairughi',
+  'улица', 'проспект', 'փողոց', 'պողոտա', 'թաղամաս', 'նրբանցք', 'հրապարակ', 'մայրուղի'].flatMap(fold));
+const words = text => fold(text).filter(w => !STOP.has(w));
+
+const isLatin = t => /^[\x00-\x7F«»“”‘’–—]+$/.test(t);
+let searchIndex = null, addressIndex = null;
+
+/** Loads the index once, the first time it's useful (the car is in or near Armenia). */
+function loadSearchIndex() {
+  if (searchIndex) return searchIndex;
+  searchIndex = fetch('data/am-search.json').then(r => r.json()).then(d => {
+    const towns = d.towns.map(([name, alts]) => alts.find(isLatin) || name);
+    const entries = d.e.map(([kind, name, alts, lat, lng, town, extra]) => {
+      const all = [name, ...alts];
+      return { kind, name, alts, lat: lat / 1e5, lng: lng / 1e5, town: town >= 0 ? towns[town] : '', extra,
+               display: isLatin(name) ? name : (alts.find(isLatin) || name), keys: all.map(words) };
+    });
+    return { entries };
+  });
+  return searchIndex;
+}
+function loadAddresses() {
+  if (addressIndex) return addressIndex;
+  addressIndex = fetch('data/am-addresses.json').then(r => r.json()).then(d =>
+    Object.entries(d.streets).map(([street, list]) => ({ street, keys: words(street), list })));
+  return addressIndex;
+}
+q.addEventListener('focus', () => { const c = pos || M.center(); if (inArmenia(c)) loadSearchIndex(); });
+
+/** How well query words `qw` match a name's words `kw` (0 = no match). */
+function matchScore(qw, kw) {
+  if (!qw.length || !kw.length) return 0;
+  let score = 0;
+  for (const w of qw) {
+    let best = 0;
+    for (let i = 0; i < kw.length; i++) {
+      const k = kw[i];
+      const s = k === w ? 10 : k.startsWith(w) ? 7 : (w.length >= 4 && k.includes(w)) ? 3 : 0;
+      if (s > best) best = s + (i === 0 ? 1 : 0);
+    }
+    if (!best) return 0;
+    score += best;
+  }
+  if (qw.length === kw.length && qw.every((w, i) => w === kw[i])) score += 8;   // the whole name
+  return score;
+}
+
+const KIND_WEIGHT = [30, 22, 22, 10, 14];            // town, village, district, place, street
+const KIND_LABEL = ['Town', 'Village', 'District', '', 'Street'];
+// Places people drive to by name get a head start over the shop that borrowed it.
+const LANDMARK = new Set(['attraction', 'museum', 'mall', 'marketplace', 'stadium', 'theatre', 'university', 'hospital',
+  'station', 'aerodrome', 'monument', 'memorial', 'park', 'zoo', 'viewpoint', 'monastery', 'church', 'fort', 'castle']);
+
+/** English name of the street an address is on (from the street entries) and its town. */
+function describeAddress(entries, streetName, p) {
+  let street = streetName, streetTown = '', best = Infinity, nearestTown = '', bestTown = Infinity;
+  for (const e of entries) {
+    const d = dist(p, e);
+    if (e.kind === 4 && e.name === streetName && d < best) { best = d; street = e.display; streetTown = e.town; }
+    else if (e.kind <= 1 && d < bestTown) { bestTown = d; nearestTown = e.display; }
+  }
+  return { street, town: best < 5000 ? streetTown : nearestTown };
+}
+
+async function searchLocal(text, c) {
+  if (!inArmenia(c)) return [];
+  const { entries } = await loadSearchIndex();
+  const house = text.match(/(?:^|\s)(\d+[a-zա-ֆа-я]?(?:\/\d+)?)(?=\s|$)/i);
+  const qw = words(text.replace(house ? house[1] : '', ' '));
+  const found = [];
+  if (house && qw.length) {
+    // "Abovyan 10": the street, then the house on it nearest to where we are.
+    for (const s of await loadAddresses()) {
+      const m = matchScore(qw, s.keys);
+      if (!m) continue;
+      for (const [hn, lat, lng] of s.list) {
+        if (hn.toLowerCase() !== house[1].toLowerCase()) continue;
+        const p = { lat: lat / 1e5, lng: lng / 1e5 };
+        const { street, town } = describeAddress(entries, s.street, p);
+        found.push({ score: 40 + m - 12 * Math.log10(1 + dist(c, p) / 1000), name: `${street} ${hn}`, detail: ['Address', town].filter(Boolean).join(' · '), ...p });
+      }
+    }
+  }
+  if (qw.length) {
+    for (const e of entries) {
+      let m = 0;
+      for (const k of e.keys) m = Math.max(m, matchScore(qw, k));
+      if (!m) continue;
+      const km = dist(c, e) / 1000;
+      const score = m + KIND_WEIGHT[e.kind] - 12 * Math.log10(1 + km) + (e.kind <= 2 && e.extra ? Math.log10(1 + e.extra) : 0)
+                  + (e.kind === 3 && LANDMARK.has(e.extra) ? (e.extra === 'attraction' || e.extra === 'museum' ? 8 : 6) : 0);
+      const label = e.kind === 3 ? (e.extra === 'yes' ? '' : (e.extra || '').replace(/_/g, ' ')) : KIND_LABEL[e.kind];
+      const detail = [e.display !== e.name ? e.name : '', label, e.town].filter(Boolean).join(' · ');
+      found.push({ score, name: e.display, detail, lat: e.lat, lng: e.lng });
+    }
+  }
+  found.sort((a, b) => b.score - a.score);
+  // One result per place: a street's segments or a shop's duplicates within 150 m collapse.
+  const out = [];
+  for (const f of found) {
+    if (out.some(o => o.name === f.name && dist(o, f) < 150)) continue;
+    out.push(f);
+    if (out.length === 8) break;
+  }
+  return out;
 }
 
 /**
@@ -969,6 +1130,34 @@ function renderMenu() {
 $('styleBtn').onclick = () => { M.nextStyle(); renderMenu(); };
 $('engineBtn').onclick = () => { store.set('engine', M.kind === 'vector' ? 'classic' : 'vector'); location.reload(); };
 renderMenu();
+
+// ---------------------------------------------------------------- chargers
+// EV charging stations from OpenStreetMap (data/am-chargers.json, built with the search index).
+let chargersOn = store.get('chargers', false), chargerList = null;
+const SOCKET = { type2: 'Type 2', type2_combo: 'CCS2', chademo: 'CHAdeMO', gb_t: 'GB/T', gb_t_dc: 'GB/T DC', type1: 'Type 1',
+                 type1_combo: 'CCS1', tesla_supercharger: 'Tesla', schuko: 'Socket' };
+function showCharger(c) {
+  const el = document.createElement('div');
+  el.style.cssText = 'min-width:220px;font-size:16px';
+  const sockets = c.s.map(k => SOCKET[k] || k).join(', ') || 'Connectors unknown';
+  el.innerHTML = `<b>${esc(c.n)}</b><div style="color:var(--quiet);margin:4px 0 10px">${esc([c.o, sockets, c.p].filter(Boolean).join(' · '))}</div>`;
+  const go = document.createElement('button');
+  go.className = 'primary'; go.textContent = 'Drive here';
+  go.onclick = () => { M.closePopup(); routeTo({ lat: c.lat, lng: c.lng, name: c.n }); };
+  el.appendChild(go);
+  M.popup(c, el);
+}
+async function renderChargers() {
+  $('chargersBtn').textContent = chargersOn ? '⚡  Hide chargers' : '⚡  Show chargers';
+  if (!chargersOn) return M.setChargers([], showCharger);
+  try {
+    chargerList = chargerList || (await (await fetch('data/am-chargers.json')).json()).chargers
+      .map(c => ({ ...c, lat: c.ll[0] / 1e5, lng: c.ll[1] / 1e5 }));
+    M.setChargers(chargerList, showCharger);
+  } catch { toast('Couldn’t load chargers'); }
+}
+$('chargersBtn').onclick = () => { chargersOn = !chargersOn; store.set('chargers', chargersOn); $('menu').classList.add('hidden'); renderChargers(); };
+renderChargers();
 
 /** Drives the current route at 50 km/h — for testing at a desk or parked. */
 function toggleSim() {

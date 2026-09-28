@@ -5,3 +5,5 @@ build/
 relay/.wrangler/
 relay/node_modules/
 relay/mac-test/mac-test
+tools/.venv/
+tools/data/
