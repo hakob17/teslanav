@@ -12,8 +12,8 @@
 | App Privacy | ✅ published: Data Not Collected; privacy URL set |
 | In-app purchase | ✅ consumable `…teslanav.coffee`, $2.99, display name, review screenshot + notes |
 | Version page | ✅ 5 new screenshots in order (`design/appstore-6.5/`), new promo text, description, keywords, review notes; earlier: 4 screenshots, promo text, description, keywords, support URL, copyright, review notes, sign-in not required, manual release |
-| Review contact | ⏳ left empty; add name, phone and email if the submission asks for them |
-| Submit for Review | ⏳ left for you: Add for Review, include the coffee IAP, submit |
+| Review contact | ✅ filled in (required at submission) |
+| Submit for Review | ✅ submitted 2026-09-28 with the Buy me a coffee IAP (2 items); manual release after approval |
 
 Draft text for App Store Connect. Screenshots: `design/appstore/1-4` (6.9", 1320×2868), upload
 one at a time in order.
@@ -33,10 +33,9 @@ one at a time in order.
 | Encryption | `ITSAppUsesNonExemptEncryption = NO` |
 | In-app purchase | Consumable `com.hakobhakobyan.teslanav.coffee`, "Buy me a coffee", Tier $2.99, needs its own review screenshot |
 
-## Promotional text
+## Promotional text (≤170 characters)
 
-Open one page in your car's browser for a heading-up 3D map with turn-by-turn and voice, or
-mirror your iPhone to use your favourite navigation app with live traffic. Free, no account.
+Heading-up 3D map with turn-by-turn and voice in your car's browser, or mirror your iPhone for live traffic in your favourite navigation app. Free, no account.
 
 ## Description
 
@@ -63,9 +62,9 @@ car is watching (about 0.5 GB of mobile data per hour); nothing is recorded or s
 
 Maps © OpenStreetMap contributors, OpenFreeMap. Routing by OSRM, search by Photon.
 
-## Keywords
+## Keywords (≤100 characters)
 
-car screen,car browser,navigation,screen mirroring,mirror,maps,turn by turn,heading up,ev charger,armenia
+car screen,car browser,navigation,screen mirroring,mirror,maps,turn by turn,ev charger,armenia
 
 ## Notes for App Review
 
