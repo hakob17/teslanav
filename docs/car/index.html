@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>TeslaNav</title>
+<link rel="stylesheet" href="maplibre-gl.css">
 <link rel="stylesheet" href="leaflet.css">
 <style>
 :root{
@@ -20,6 +21,11 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hi
 .leaflet-control-attribution{background:rgba(13,16,21,.7)!important;color:var(--quiet)!important;font-size:11px}
 .leaflet-control-attribution a{color:var(--quiet)!important}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel);color:var(--ink)}
+.maplibregl-popup-content{background:var(--panel);color:var(--ink);border-radius:14px;padding:10px}
+.maplibregl-popup-tip{border-top-color:var(--panel)!important;border-bottom-color:var(--panel)!important}
+.maplibregl-ctrl-attrib{background:rgba(13,16,21,.7)!important;color:var(--quiet)!important;font-size:11px}
+.maplibregl-ctrl-attrib a{color:var(--quiet)!important}
+.maplibregl-ctrl-attrib-button{filter:invert(1)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 32px rgba(0,0,0,.5)}
 button{font:inherit;color:inherit;background:#232a35;border:1px solid var(--line);border-radius:14px;
   min-height:60px;padding:0 22px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px}
@@ -64,6 +70,8 @@ input[type=search]::-webkit-search-cancel-button{display:none}
 #fabs{position:absolute;top:16px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:12px;align-items:flex-end}
 #fabs button{width:76px;height:76px;padding:0;border-radius:20px;background:var(--panel)}
 #fabs button.label{width:auto;padding:0 20px;font-size:17px;font-weight:600}
+#northBtn{font-weight:800;font-size:15px;flex-direction:column;gap:2px}
+#northBtn svg{width:30px;height:30px;transition:transform .3s}
 #speed{width:88px;height:88px;border-radius:50%;background:var(--panel);border:1px solid var(--line);
   display:flex;flex-direction:column;align-items:center;justify-content:center}
 #speed b{font-size:34px;line-height:1}
@@ -81,6 +89,8 @@ body.navigating #status{bottom:130px}
 /* car marker */
 .car{width:52px;height:52px;display:grid;place-items:center;transition:transform .8s ease-out}
 .car svg{width:52px;height:52px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+/* MapLibre positions markers with transform itself; animating it makes the car lag behind. */
+.car.gl{transition:none}
 .dest{width:40px;height:40px}
 
 /* mirror mode */
@@ -134,6 +144,7 @@ body.navigating #status{bottom:130px}
 
 <div id="fabs">
   <div id="speed" class="hidden"><b>0</b><span>km/h</span></div>
+  <button id="northBtn" class="hidden" aria-label="Heading up or north up"></button>
   <button id="recenter" class="hidden" aria-label="Recenter">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l7 19-7-4-7 4z"/></svg>
   </button>
@@ -150,6 +161,7 @@ body.navigating #status{bottom:130px}
   <button id="voiceBtn"></button>
   <button id="testVoice">Test voice</button>
   <button id="styleBtn"></button>
+  <button id="engineBtn"></button>
   <button id="simBtn">Simulate drive</button>
   <button id="pairBtn">📱  Phone code</button>
 </div>
@@ -185,6 +197,7 @@ body.navigating #status{bottom:130px}
   </div>
 </div>
 
+<script src="maplibre-gl.js"></script>
 <script src="leaflet.js"></script>
 <script>
 (() => {
@@ -250,47 +263,220 @@ function fmtDuration(s) {
 }
 
 // ---------------------------------------------------------------- map
+// Two engines behind one small interface (M): a vector map drawn with MapLibre (sharp at
+// every zoom, can rotate heading-up and tilt), and the older Leaflet raster map as a
+// fallback for browsers without WebGL or when chosen in the menu.
 const params = new URLSearchParams(location.search);
 const saved = store.get('view', { lat: 20, lng: 0, z: 3 });
-const map = L.map('map', { zoomControl: false, zoomSnap: 0.5, tap: false }).setView([saved.lat, saved.lng], saved.z);
-// Keyless tile sources (CARTO's dark tiles now need an API key). OpenStreetMap has the best
-// street detail almost everywhere; a CSS filter (.dark-tiles) turns it into a night map.
-const styles = {
-  osm: [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 20, maxNativeZoom: 19, className: 'dark-tiles', attribution: '© OpenStreetMap contributors',
-  })],
-  esri: [
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 20, maxNativeZoom: 16, attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors',
-    }),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 20, maxNativeZoom: 16,
-    }),
-  ],
-};
-let style = styles[store.get('style', 'osm')] ? store.get('style', 'osm') : 'osm';
-function setStyle(name) {
-  styles[style].forEach(l => l.remove());
-  style = name; store.set('style', name);
-  styles[style].forEach(l => l.addTo(map));
-  $('styleBtn').textContent = '🗺  Map: ' + (style === 'osm' ? 'OpenStreetMap' : 'Esri dark');
-}
-map.attributionControl.setPrefix(false);
-map.on('moveend', () => { const c = map.getCenter(); store.set('view', { lat: c.lat, lng: c.lng, z: map.getZoom() }); });
+const CAR_SVG = '<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="#3e8bff" stroke="#fff" stroke-width="4"/><path d="M26 12l10 24-10-6-10 6z" fill="#fff"/></svg>';
+const DEST_SVG = '<svg class="dest" viewBox="0 0 40 40"><path d="M20 38s13-13 13-22a13 13 0 0 0-26 0c0 9 13 22 13 22z" fill="#ff5a5f" stroke="#fff" stroke-width="2.5"/><circle cx="20" cy="16" r="5" fill="#fff"/></svg>';
 
-const carIcon = L.divIcon({
-  className: '', iconSize: [52, 52], iconAnchor: [26, 26],
-  html: '<div class="car"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="#3e8bff" stroke="#fff" stroke-width="4"/><path d="M26 12l10 24-10-6-10 6z" fill="#fff"/></svg></div>',
-});
-const destIcon = L.divIcon({
-  className: '', iconSize: [40, 40], iconAnchor: [20, 38],
-  html: '<svg class="dest" viewBox="0 0 40 40"><path d="M20 38s13-13 13-22a13 13 0 0 0-26 0c0 9 13 22 13 22z" fill="#ff5a5f" stroke="#fff" stroke-width="2.5"/><circle cx="20" cy="16" r="5" fill="#fff"/></svg>',
-});
-const accCircle = L.circle([0, 0], { radius: 0, stroke: false, fillColor: '#3e8bff', fillOpacity: 0.12, interactive: false });
-const carMarker = L.marker([0, 0], { icon: carIcon, interactive: false, zIndexOffset: 1000 });
-const casing = L.polyline([], { color: '#0b2a57', weight: 14, opacity: 0.9, interactive: false });
-const line = L.polyline([], { color: '#3e8bff', weight: 8, opacity: 1, interactive: false });
-const destMarker = L.marker([0, 0], { icon: destIcon, interactive: false });
+function hasWebGL() {
+  try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); }
+  catch { return false; }
+}
+const engine = store.get('engine', 'vector') === 'vector' && window.maplibregl && hasWebGL() ? 'vector' : 'classic';
+
+/** A circle of `r` metres around p as a GeoJSON ring (for the GPS accuracy halo). */
+function circleRing(p, r) {
+  const pts = [], dLat = r / 111320, dLng = r / (111320 * Math.cos(rad(p.lat)));
+  for (let i = 0; i <= 48; i++) { const a = i / 48 * 2 * Math.PI; pts.push([p.lng + dLng * Math.cos(a), p.lat + dLat * Math.sin(a)]); }
+  return pts;
+}
+
+function vectorMap() {
+  const STYLES = {
+    night: { name: 'Night', url: 'https://tiles.openfreemap.org/styles/dark' },
+    day: { name: 'Day', url: 'https://tiles.openfreemap.org/styles/liberty' },
+  };
+  let styleKey = STYLES[store.get('vstyle')] ? store.get('vstyle') : 'night';
+  const map = new maplibregl.Map({
+    container: 'map', style: STYLES[styleKey].url, center: [saved.lng, saved.lat], zoom: saved.z,
+    attributionControl: { compact: true }, dragRotate: true, pitchWithRotate: true, maxPitch: 60,
+  });
+  const empty = { type: 'FeatureCollection', features: [] };
+  let routeData = empty, accData = empty;
+
+  // Route and GPS halo live in the style, so they're re-added whenever the style changes.
+  function addOverlays() {
+    if (map.getSource('route')) return;
+    map.addSource('route', { type: 'geojson', data: routeData });
+    map.addSource('acc', { type: 'geojson', data: accData });
+    map.addLayer({ id: 'acc', type: 'fill', source: 'acc', paint: { 'fill-color': '#3e8bff', 'fill-opacity': 0.12 } });
+    map.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' },
+                   paint: { 'line-color': '#0b2a57', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 7, 16, 16] } });
+    map.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' },
+                   paint: { 'line-color': '#3e8bff', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 9] } });
+  }
+  // OpenFreeMap's dark style is very low-contrast; on a car screen in daylight the roads vanish.
+  // Lift roads, labels and land a few steps while keeping it a night map.
+  const NIGHT = {
+    background: ['background-color', '#10141a'],
+    water: ['fill-color', '#15263a'], waterway: ['line-color', '#1d3350'],
+    landuse_residential: ['fill-color', '#13171d'], landcover_wood: ['fill-color', '#122019'], landuse_park: ['fill-color', '#122019'],
+    building: ['fill-color', '#1b212a'],
+    highway_path: ['line-color', '#2a3140'], highway_minor: ['line-color', '#3a4353'],
+    highway_major_casing: ['line-color', '#262c36'], highway_major_inner: ['line-color', '#5d6879'], highway_major_subtle: ['line-color', '#4a5465'],
+    highway_motorway_casing: ['line-color', '#3a2f1c'], highway_motorway_inner: ['line-color', '#9a7b3f'], highway_motorway_subtle: ['line-color', '#6d5a33'],
+    railway: ['line-color', '#343a44'], railway_minor: ['line-color', '#2c323b'], railway_transit: ['line-color', '#2c323b'],
+    highway_name_other: ['text-color', '#b9c2cf'], highway_name_motorway: ['text-color', '#e0cf9f'], water_name: ['text-color', '#6f8fb5'],
+  };
+  function tuneNight() {
+    if (styleKey !== 'night') return;
+    for (const [id, [prop, value]] of Object.entries(NIGHT)) {
+      if (map.getLayer(id)) try { map.setPaintProperty(id, prop, value); } catch {}
+    }
+    for (const l of map.getStyle().layers) {
+      if (l.type !== 'symbol') continue;
+      if (l.id.startsWith('place_')) try { map.setPaintProperty(l.id, 'text-color', '#d3dae4'); } catch {}
+      try { map.setPaintProperty(l.id, 'text-halo-color', '#10141a'); map.setPaintProperty(l.id, 'text-halo-width', 1.4); } catch {}
+    }
+  }
+  map.on('style.load', () => { tuneNight(); addOverlays(); });
+
+  const carEl = document.createElement('div');
+  carEl.className = 'car gl'; carEl.innerHTML = CAR_SVG;
+  const car = new maplibregl.Marker({ element: carEl, rotationAlignment: 'map', pitchAlignment: 'map' });
+  const destEl = document.createElement('div'); destEl.innerHTML = DEST_SVG;
+  const destM = new maplibregl.Marker({ element: destEl, anchor: 'bottom' });
+  let popup = null;
+
+  // Long press (touch or mouse) → 'longpress'.
+  const handlers = {};
+  let pressTimer = null, pressAt = null;
+  const canvasEl = map.getCanvasContainer();
+  canvasEl.addEventListener('pointerdown', e => {
+    pressAt = [e.clientX, e.clientY];
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => {
+      const r = map.getContainer().getBoundingClientRect();
+      const ll = map.unproject([pressAt[0] - r.left, pressAt[1] - r.top]);
+      (handlers.longpress || (() => {}))({ lat: ll.lat, lng: ll.lng });
+    }, 650);
+  });
+  const cancelPress = e => {
+    if (e.type === 'pointermove' && pressAt && Math.hypot(e.clientX - pressAt[0], e.clientY - pressAt[1]) < 10) return;
+    clearTimeout(pressTimer);
+  };
+  ['pointerup', 'pointercancel', 'pointermove'].forEach(t => canvasEl.addEventListener(t, cancelPress));
+
+  return {
+    kind: 'vector', canRotate: true,
+    styleName: () => STYLES[styleKey].name,
+    nextStyle() { styleKey = styleKey === 'night' ? 'day' : 'night'; store.set('vstyle', styleKey); map.setStyle(STYLES[styleKey].url); },
+    center() { const c = map.getCenter(); return { lat: c.lat, lng: c.lng }; },
+    zoom: () => map.getZoom(),
+    bearing: () => map.getBearing(),
+    setZoom(z) { map.jumpTo({ zoom: z }); },
+    /** Instant move. `ahead` shifts the car towards the bottom of the screen (0..0.5). */
+    jump(p, { zoom, bearing = 0, pitch = 0, ahead = 0 } = {}) {
+      const h = map.getContainer().clientHeight;
+      map.jumpTo({ center: [p.lng, p.lat], zoom: zoom ?? map.getZoom(), bearing, pitch,
+                   padding: { top: h * ahead * 2, bottom: 0, left: 0, right: 0 } });
+    },
+    /** North-up follow with the view pushed ahead of the car along `course`. */
+    jumpAhead(p, course, frac) {
+      const c = map.getContainer(), a = rad(course);
+      map.jumpTo({ center: [p.lng, p.lat], bearing: 0, pitch: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 } });
+      const pt = map.project([p.lng, p.lat]);
+      const ll = map.unproject([pt.x + Math.sin(a) * c.clientWidth * frac, pt.y - Math.cos(a) * c.clientHeight * frac]);
+      map.jumpTo({ center: ll });
+    },
+    fit(points, pad) {
+      const b = new maplibregl.LngLatBounds();
+      points.forEach(p => b.extend([p.lng, p.lat]));
+      map.fitBounds(b, { padding: pad, maxZoom: 17, bearing: 0, pitch: 0, duration: 800 });
+    },
+    setCar(p, heading) { car.setLngLat([p.lng, p.lat]).setRotation(heading); if (!car._map) car.addTo(map); },
+    setAcc(p, r) { accData = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [circleRing(p, r)] } }; map.getSource('acc')?.setData(accData); },
+    setRoute(points) {
+      routeData = { type: 'Feature', geometry: { type: 'LineString', coordinates: points.map(p => [p.lng, p.lat]) } };
+      map.getSource('route')?.setData(routeData);
+    },
+    clearRoute() { routeData = empty; map.getSource('route')?.setData(empty); },
+    setDest(p) { destM.setLngLat([p.lng, p.lat]).addTo(map); },
+    clearDest() { destM.remove(); },
+    popup(p, el) { popup?.remove(); popup = new maplibregl.Popup({ closeButton: false }).setLngLat([p.lng, p.lat]).setDOMContent(el).addTo(map); },
+    closePopup() { popup?.remove(); popup = null; },
+    on(ev, fn) {
+      if (ev === 'longpress') handlers.longpress = fn;
+      else if (ev === 'userMove') ['dragstart', 'rotatestart', 'pitchstart'].forEach(t => map.on(t, e => { if (e.originalEvent) fn(); }));
+      else if (ev === 'click') map.on('click', fn);
+      else if (ev === 'moveend') map.on('moveend', fn);
+    },
+  };
+}
+
+function classicMap() {
+  const map = L.map('map', { zoomControl: false, zoomSnap: 0.5, tap: false }).setView([saved.lat, saved.lng], saved.z);
+  // Keyless raster tiles: OpenStreetMap made dark with a CSS filter, or Esri's dark canvas.
+  const STYLES = {
+    osm: { name: 'OpenStreetMap', layers: [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 20, maxNativeZoom: 19, className: 'dark-tiles', attribution: '© OpenStreetMap contributors' })] },
+    esri: { name: 'Esri dark', layers: [
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 20, maxNativeZoom: 16, attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors' }),
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 20, maxNativeZoom: 16 })] },
+  };
+  let styleKey = STYLES[store.get('style')] ? store.get('style') : 'osm';
+  STYLES[styleKey].layers.forEach(l => l.addTo(map));
+  map.attributionControl.setPrefix(false);
+
+  const carM = L.marker([0, 0], { interactive: false, zIndexOffset: 1000,
+    icon: L.divIcon({ className: '', iconSize: [52, 52], iconAnchor: [26, 26], html: '<div class="car">' + CAR_SVG + '</div>' }) });
+  const destM = L.marker([0, 0], { interactive: false,
+    icon: L.divIcon({ className: '', iconSize: [40, 40], iconAnchor: [20, 38], html: DEST_SVG }) });
+  const acc = L.circle([0, 0], { radius: 0, stroke: false, fillColor: '#3e8bff', fillOpacity: 0.12, interactive: false });
+  const casing = L.polyline([], { color: '#0b2a57', weight: 14, opacity: 0.9, interactive: false });
+  const line = L.polyline([], { color: '#3e8bff', weight: 8, opacity: 1, interactive: false });
+  let popup = null;
+
+  return {
+    kind: 'classic', canRotate: false,
+    styleName: () => STYLES[styleKey].name,
+    nextStyle() {
+      STYLES[styleKey].layers.forEach(l => l.remove());
+      styleKey = styleKey === 'osm' ? 'esri' : 'osm'; store.set('style', styleKey);
+      STYLES[styleKey].layers.forEach(l => l.addTo(map));
+    },
+    center() { const c = map.getCenter(); return { lat: c.lat, lng: c.lng }; },
+    zoom: () => map.getZoom(),
+    bearing: () => 0,
+    setZoom(z) { map.setZoom(z, { animate: false }); },
+    jump(p, { zoom } = {}) { map.setView([p.lat, p.lng], zoom ?? map.getZoom(), { animate: false }); },
+    jumpAhead(p, course, frac) {
+      const z = map.getZoom(), size = map.getSize(), a = rad(course);
+      const pt = map.project([p.lat, p.lng], z).add(L.point(Math.sin(a) * size.x * frac, -Math.cos(a) * size.y * frac));
+      map.setView(map.unproject(pt, z), z, { animate: false });
+    },
+    fit(points, pad) {
+      map.fitBounds(L.latLngBounds(points.map(p => [p.lat, p.lng])),
+        { paddingTopLeft: [pad.left, pad.top], paddingBottomRight: [pad.right, pad.bottom], maxZoom: 17 });
+    },
+    setCar(p, heading) {
+      if (!map.hasLayer(carM)) carM.addTo(map);
+      carM.setLatLng([p.lat, p.lng]);
+      const el = carM.getElement();
+      if (el) el.firstChild.style.transform = `rotate(${heading}deg)`;
+    },
+    setAcc(p, r) { if (!map.hasLayer(acc)) acc.addTo(map); acc.setLatLng([p.lat, p.lng]).setRadius(r); },
+    setRoute(points) { const ll = points.map(p => [p.lat, p.lng]); casing.setLatLngs(ll).addTo(map); line.setLatLngs(ll).addTo(map); },
+    clearRoute() { casing.remove(); line.remove(); },
+    setDest(p) { destM.setLatLng([p.lat, p.lng]).addTo(map); },
+    clearDest() { destM.remove(); },
+    popup(p, el) { popup = L.popup({ closeButton: false }).setLatLng([p.lat, p.lng]).setContent(el).openOn(map); },
+    closePopup() { if (popup) map.closePopup(popup); popup = null; },
+    on(ev, fn) {
+      if (ev === 'longpress') map.on('contextmenu', e => fn({ lat: e.latlng.lat, lng: e.latlng.lng }));
+      else if (ev === 'userMove') map.on('dragstart', fn);
+      else map.on(ev, fn);
+    },
+  };
+}
+
+const M = engine === 'vector' ? vectorMap() : classicMap();
+M.on('moveend', () => { const c = M.center(); store.set('view', { lat: c.lat, lng: c.lng, z: M.zoom() }); });
 
 // ---------------------------------------------------------------- state
 let pos = null;              // latest fix {lat,lng,speed,course,acc,ts,src}
@@ -305,18 +491,19 @@ let voiceOn = store.get('voice', true);
 let arrived = false;
 
 // ---------------------------------------------------------------- position
-let heading = 0, anim = null;
+let heading = 0, shownHeading = 0, anim = null;
+// Heading-up: the map turns so the road ahead is always up (vector map only).
+let headingUp = store.get('headingUp', true);
 
 function onFix(p) {
   if (sim && p.src !== 'sim') return;
   if (!(p.course >= 0)) p.course = pos && dist(pos, p) > 4 ? bearing(pos, p) : (pos ? pos.course : 0);
   const first = !pos;
   pos = p;
-  if (!map.hasLayer(carMarker)) { carMarker.addTo(map); accCircle.addTo(map); }
-  accCircle.setLatLng([p.lat, p.lng]).setRadius(Math.min(p.acc || 0, 200));
+  M.setAcc(p, Math.min(p.acc || 0, 200));
   rotateCar(p.course);
+  if (first) { shown = p; shownHeading = heading; M.jump(p, { zoom: 16 }); }
   animateTo(p);
-  if (first) map.setView([p.lat, p.lng], 16, { animate: false });
 
   const kmh = p.speed > 0 ? Math.round(p.speed * 3.6) : 0;
   show($('speed'), true);
@@ -329,17 +516,17 @@ function onFix(p) {
 function rotateCar(course) {
   // Take the short way round: 350° → 10° turns 20°, not 340°.
   heading += ((course - heading + 540) % 360) - 180;
-  const el = carMarker.getElement();
-  if (el) el.firstChild.style.transform = `rotate(${heading}deg)`;
 }
 
+/** Glide the car (and heading) to the new fix over ~1 s so the map moves smoothly. */
 function animateTo(p) {
-  const from = shown || p, t0 = performance.now(), dur = 900;
+  const from = shown || p, fromHeading = shownHeading, t0 = performance.now(), dur = 900;
   cancelAnimationFrame(anim);
   const step = now => {
     const k = Math.min(1, (now - t0) / dur);
     shown = { lat: from.lat + (p.lat - from.lat) * k, lng: from.lng + (p.lng - from.lng) * k };
-    carMarker.setLatLng([shown.lat, shown.lng]);
+    shownHeading = fromHeading + (heading - fromHeading) * k;
+    M.setCar(shown, shownHeading);
     if (follow) followCar();
     if (k < 1) anim = requestAnimationFrame(step);
   };
@@ -347,28 +534,38 @@ function animateTo(p) {
 }
 
 /**
- * Keep the car in view. While navigating, shift the view ahead of the car in the direction
- * it's driving (the map stays north-up), so more of the road ahead is on screen.
+ * Keep the car in view. Heading-up (vector map): the map turns with the car, tilts, and the
+ * car sits low on screen so the road ahead fills it. North-up: the view is pushed ahead of the
+ * car in the direction it's driving.
  */
 function followCar() {
   if (!shown) return;
-  const z = map.getZoom();
-  if (!route) return map.setView([shown.lat, shown.lng], z, { animate: false });
-  const size = map.getSize(), a = rad(heading);
-  const ahead = L.point(Math.sin(a) * size.x * 0.22, -Math.cos(a) * size.y * 0.25);
-  const pt = map.project([shown.lat, shown.lng], z).add(ahead);
-  map.setView(map.unproject(pt, z), z, { animate: false });
+  if (M.canRotate && headingUp && route) return M.jump(shown, { bearing: shownHeading, pitch: 45, ahead: 0.22 });
+  if (M.canRotate && headingUp && pos && pos.speed > 2) return M.jump(shown, { bearing: shownHeading, pitch: 0, ahead: 0.12 });
+  if (!route) return M.jump(shown);
+  M.jumpAhead(shown, shownHeading, 0.22);
 }
+
+function renderNorth() {
+  show($('northBtn'), M.canRotate);
+  $('northBtn').innerHTML = `<svg viewBox="0 0 24 24" style="transform:rotate(${headingUp ? 0 : 0}deg)" fill="currentColor"><path d="M12 2l7 19-7-4-7 4z"/></svg>${headingUp ? 'HEAD' : 'N'}`;
+}
+$('northBtn').onclick = () => {
+  headingUp = !headingUp; store.set('headingUp', headingUp); renderNorth();
+  if (!headingUp && M.canRotate && shown) M.jump(shown, { bearing: 0, pitch: 0 });
+  setFollow(true);
+};
+renderNorth();
 
 function setFollow(on) {
   follow = on;
   show($('recenter'), !on && !!pos);
   if (on && pos) {
-    if (route && map.getZoom() < 16) map.setZoom(17, { animate: false });
+    if (route && M.zoom() < 16) M.setZoom(17);
     followCar();
   }
 }
-map.on('dragstart', () => setFollow(false));
+M.on('userMove', () => setFollow(false));
 $('recenter').onclick = () => setFollow(true);
 
 // ---------------------------------------------------------------- location sources
@@ -416,36 +613,66 @@ async function search() {
   const m = text.match(/^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/);
   if (m) return renderResults([{ name: 'Coordinates', detail: `${m[1]}, ${m[2]}`, lat: +m[1], lng: +m[2] }]);
 
-  const c = pos || map.getCenter();
+  const c = pos || M.center();
   const seq = ++searchSeq;
-  // Nominatim treats a viewbox as a mere hint, so "Cascade" would list Montana before the one
-  // down the road. Ask for nearby matches first (~60 km box), then fill up from everywhere.
+  try {
+    const items = await searchPhoton(text, c);
+    if (seq !== searchSeq) return;
+    renderResults(items, items.length ? '' : 'Nothing found');
+  } catch {
+    try {
+      const items = await searchNominatim(text, c);
+      if (seq === searchSeq) renderResults(items, items.length ? '' : 'Nothing found');
+    } catch {
+      if (seq === searchSeq) renderResults([], 'Search failed — no internet?');
+    }
+  }
+}
+
+/**
+ * Photon (OSM data, made for typing as you search). Its "near me" bias alone still lets an
+ * exact name match in another country outrank the place down the road, so search within
+ * ~100 km first and only fill up from everywhere when that finds too little.
+ */
+async function searchPhoton(text, c) {
+  const base = `https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&lat=${c.lat.toFixed(4)}&lon=${c.lng.toFixed(4)}&limit=8`;
+  const bbox = [c.lng - 1.2, c.lat - 0.9, c.lng + 1.2, c.lat + 0.9].map(v => v.toFixed(4)).join(',');
+  const near = (await (await fetchT(`${base}&bbox=${bbox}`, 7000)).json()).features.map(toPhotonItem);
+  if (near.length >= 3) return near;
+  const wide = (await (await fetchT(base, 7000)).json()).features.map(toPhotonItem);
+  return near.concat(wide.filter(w => !near.some(n => dist(n, w) < 30))).slice(0, 8);
+}
+
+function toPhotonItem(f) {
+    const p = f.properties, [lng, lat] = f.geometry.coordinates;
+    const street = [p.street, p.housenumber].filter(Boolean).join(' ');
+    const name = p.name || street || p.city || 'Place';
+    const detail = [p.name ? street : '', p.district, p.city, p.country].filter(Boolean).join(', ');
+    return { name, detail, lat, lng };
+}
+
+/** Backup: Nominatim, nearby matches first (~60 km box), then from everywhere. */
+async function searchNominatim(text, c) {
   const vb = [c.lng - 0.7, c.lat + 0.5, c.lng + 0.7, c.lat - 0.5].map(v => v.toFixed(4)).join(',');
   const base = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&q=${encodeURIComponent(text)}`;
   const toItem = x => {
     const parts = x.display_name.split(', ');
     return { name: x.name || parts[0], detail: parts.slice(1).join(', '), lat: +x.lat, lng: +x.lon, id: x.place_id };
   };
-  try {
-    let items = (await (await fetchT(`${base}&viewbox=${vb}&bounded=1`, 8000)).json()).map(toItem);
-    if (seq !== searchSeq) return;
-    items.sort((a, b) => dist(c, a) - dist(c, b));
-    if (items.length < 3) {
-      const wide = (await (await fetchT(`${base}&viewbox=${vb}`, 8000)).json()).map(toItem);
-      if (seq !== searchSeq) return;
-      items = items.concat(wide.filter(w => !items.some(i => i.id === w.id))).slice(0, 7);
-    }
-    renderResults(items, items.length ? '' : 'Nothing found');
-  } catch {
-    if (seq === searchSeq) renderResults([], 'Search failed — check the iPhone’s mobile data');
+  let items = (await (await fetchT(`${base}&viewbox=${vb}&bounded=1`, 8000)).json()).map(toItem);
+  items.sort((a, b) => dist(c, a) - dist(c, b));
+  if (items.length < 3) {
+    const wide = (await (await fetchT(`${base}&viewbox=${vb}`, 8000)).json()).map(toItem);
+    items = items.concat(wide.filter(w => !items.some(i => i.id === w.id))).slice(0, 7);
   }
+  return items;
 }
 
 q.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(search, 600); });
 q.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(searchTimer); search(); } });
 q.addEventListener('focus', () => { if (!q.value.trim()) showRecents(); });
 $('clearQ').onclick = () => { q.value = ''; show($('clearQ'), false); results.innerHTML = ''; q.focus(); };
-map.on('click', () => { results.innerHTML = ''; q.blur(); $('menu').classList.add('hidden'); });
+M.on('click', () => { results.innerHTML = ''; q.blur(); $('menu').classList.add('hidden'); });
 
 function choose(it) {
   const recents = store.get('recent', []).filter(r => r.name !== it.name || dist(r, it) > 50);
@@ -456,11 +683,11 @@ function choose(it) {
 }
 
 // Long-press anywhere on the map to drive there.
-map.on('contextmenu', e => {
+M.on('longpress', ll => {
   const btn = document.createElement('button');
   btn.className = 'primary'; btn.textContent = 'Drive here';
-  const popup = L.popup({ closeButton: false }).setLatLng(e.latlng).setContent(btn).openOn(map);
-  btn.onclick = () => { map.closePopup(popup); routeTo({ lat: e.latlng.lat, lng: e.latlng.lng, name: 'Dropped pin' }); };
+  M.popup(ll, btn);
+  btn.onclick = () => { M.closePopup(); routeTo({ lat: ll.lat, lng: ll.lng, name: 'Dropped pin' }); };
 });
 
 // ---------------------------------------------------------------- routing
@@ -468,7 +695,7 @@ let routing = false;
 
 async function routeTo(d, { reroute = false, resume = false } = {}) {
   if (routing) return;
-  const from = pos || (() => { const c = map.getCenter(); return { lat: c.lat, lng: c.lng }; })();
+  const from = pos || M.center();
   let url = `https://router.project-osrm.org/route/v1/driving/${from.lng.toFixed(6)},${from.lat.toFixed(6)};` +
             `${d.lng.toFixed(6)},${d.lat.toFixed(6)}?overview=false&steps=true&geometries=geojson`;
   // Moving: start the route in the direction we're already going, not with a U-turn.
@@ -520,9 +747,8 @@ function buildRoute(rt) {
 function setRoute(r, d) {
   route = r; dest = d; arrived = false;
   store.set('dest', d);
-  casing.setLatLngs(r.pts).addTo(map);
-  line.setLatLngs(r.pts).addTo(map);
-  destMarker.setLatLng([d.lat, d.lng]).addTo(map);
+  M.setRoute(r.pts);
+  M.setDest(d);
   document.body.classList.add('navigating');
   show($('search'), false); show($('banner'), true); show($('trip'), true);
   if (sim) sim.along = 0;
@@ -531,7 +757,7 @@ function setRoute(r, d) {
 
 function endRoute() {
   route = null; dest = null; store.set('dest', null);
-  [casing, line, destMarker].forEach(l => l.remove());
+  M.clearRoute(); M.clearDest();
   document.body.classList.remove('navigating');
   show($('search'), true); show($('banner'), false); show($('trip'), false);
   if (sim) toggleSim();
@@ -543,10 +769,8 @@ $('end').onclick = endRoute;
 let overviewTimer;
 function overview(auto) {
   if (!route) return;
-  const bounds = L.latLngBounds(route.pts.map(p => [p.lat, p.lng]));
-  if (pos) bounds.extend([pos.lat, pos.lng]);
   setFollow(false);
-  map.fitBounds(bounds, { paddingTopLeft: [520, 60], paddingBottomRight: [120, 60], maxZoom: 17 });
+  M.fit(pos ? [...route.pts, pos] : route.pts, { top: 60, bottom: 60, left: 520, right: 120 });
   clearTimeout(overviewTimer);
   if (auto && pos) overviewTimer = setTimeout(() => { if (!follow) setFollow(true); }, 5000);
 }
@@ -623,8 +847,7 @@ function navUpdate() {
   renderTrip(remain, secs);
 
   // Draw only the road still ahead.
-  const ahead = [[pos.lat, pos.lng], ...r.pts.slice(loc.i + 1).map(p => [p.lat, p.lng])];
-  casing.setLatLngs(ahead); line.setLatLngs(ahead);
+  M.setRoute([pos, ...r.pts.slice(loc.i + 1)]);
 
   if (remain < 25 || (next.type === 'arrive' && dNext < 20 && loc.d < 50)) arrive();
 }
@@ -739,8 +962,13 @@ renderVoice();
 
 // ---------------------------------------------------------------- menu + simulator
 $('menuBtn').onclick = () => $('menu').classList.toggle('hidden');
-$('styleBtn').onclick = () => setStyle(style === 'osm' ? 'esri' : 'osm');
-setStyle(style);
+function renderMenu() {
+  $('styleBtn').textContent = '🗺  Map: ' + M.styleName();
+  $('engineBtn').textContent = M.kind === 'vector' ? '🧭  Switch to classic map' : '🧭  Switch to vector map';
+}
+$('styleBtn').onclick = () => { M.nextStyle(); renderMenu(); };
+$('engineBtn').onclick = () => { store.set('engine', M.kind === 'vector' ? 'classic' : 'vector'); location.reload(); };
+renderMenu();
 
 /** Drives the current route at 50 km/h — for testing at a desk or parked. */
 function toggleSim() {
@@ -953,6 +1181,8 @@ dest = to.length === 2 && to.every(Number.isFinite)
   : store.get('dest', null);      // otherwise resume navigation after a reload
 detectSource();
 if (store.get('mode', 'map') === 'mirror' && pairCode()) setMode('mirror');
+// A ?to= link opened without a GPS fix (e.g. testing at a desk): route from the map centre.
+if (params.has('to') && dest) setTimeout(() => { if (!pos && !route) routeTo(dest); }, 3000);
 })();
 </script>
 </body>
