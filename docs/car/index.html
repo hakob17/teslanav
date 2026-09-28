@@ -1246,10 +1246,79 @@ function showCharger(c) {
   el.style.cssText = 'min-width:240px;font-size:16px';
   el.innerHTML = `<b>${esc(c.n)}</b><div style="color:var(--quiet);margin:4px 0 2px">${esc([c.o, c.p, c.c && c.c + ' points'].filter(Boolean).join(' · '))}</div>
     <div style="margin-bottom:12px">${connBadges(c)}</div>`;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
   const go = document.createElement('button');
   go.className = 'primary'; go.textContent = 'Drive here';
   go.onclick = () => { M.closePopup(); show($('chargerPanel'), false); routeTo({ lat: c.lat, lng: c.lng, name: c.n }); };
-  el.appendChild(go);
+  const report = document.createElement('button');
+  report.textContent = c.s.length ? 'Correct connectors' : 'Add connector info';
+  report.onclick = () => reportCharger(c);
+  row.append(go, report);
+  el.appendChild(row);
+  M.popup(c, el);
+}
+
+// ---------------------------------------------------------------- report connectors
+// Drivers who see a charger can tell OpenStreetMap what it has: the page posts an anonymous
+// public OSM note at the station, volunteers add the tags, and the next index build picks
+// them up. No account needed. ?osmdev sends notes to OSM's test server instead.
+const OSM_NOTES = params.has('osmdev') ? 'https://master.apis.dev.openstreetmap.org/api/0.6/notes.json'
+                                       : 'https://api.openstreetmap.org/api/0.6/notes.json';
+const REPORT_SOCKETS = { 'CCS2': 'socket:type2_combo', 'Type 2': 'socket:type2', 'CHAdeMO': 'socket:chademo',
+                         'GB/T': 'socket:gb_t', 'GB/T DC': 'socket:gb_dc', 'Tesla': 'socket:tesla_supercharger' };
+const REPORT_POWER = ['7 kW', '11 kW', '22 kW', '50 kW', '60 kW', '120 kW', '150+ kW'];
+
+function reportCharger(c) {
+  const key = `${c.ll[0]},${c.ll[1]}`;
+  const picked = new Set(c.s.filter(k => REPORT_SOCKETS[k]));
+  let power = '';
+  const el = document.createElement('div');
+  el.style.cssText = 'width:320px;font-size:16px';
+  el.innerHTML = `<b>What does ${esc(c.n)} have?</b>
+    <div style="color:var(--quiet);font-size:14px;margin:4px 0 10px">Sent as a public note to OpenStreetMap, where volunteers add it to the map.</div>
+    <div class="chipLabel">Connectors</div><div class="rc" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px"></div>
+    <div class="chipLabel">Fastest charging (if shown)</div><div class="rp" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px"></div>`;
+  const chip = (box, label, on, toggle) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (on ? ' on' : ''); b.textContent = label;
+    b.onclick = () => { toggle(b); b.classList.toggle('on'); };
+    box.appendChild(b); return b;
+  };
+  for (const k of Object.keys(REPORT_SOCKETS)) chip(el.querySelector('.rc'), k, picked.has(k), () => picked.has(k) ? picked.delete(k) : picked.add(k));
+  const powerChips = REPORT_POWER.map(p => chip(el.querySelector('.rp'), p, false, tapped => {
+    power = power === p ? '' : p;
+    powerChips.forEach(b => b !== tapped && b.classList.remove('on'));   // one power at most
+  }));
+  const send = document.createElement('button');
+  send.className = 'primary'; send.textContent = 'Send';
+  send.onclick = async () => {
+    if (!picked.size) return toast('Pick at least one connector');
+    if (store.get('reported', []).includes(key)) return toast('You already reported this charger — thank you!');
+    const tags = [...picked].map(k => `${REPORT_SOCKETS[k]}=yes`).concat(power ? [`charging_station:output=${power.replace('+', '')}`] : []);
+    const text = `EV charging station — connectors reported by a driver (TeslaNav car page)\n\n` +
+      `Station: ${c.n}${c.o ? ' (' + c.o + ')' : ''}\nConnectors: ${[...picked].join(', ')}\n` +
+      (power ? `Fastest charging: ${power}\n` : '') + `Suggested tags: ${tags.join('; ')}\n\n#TeslaNav #evcharging`;
+    send.disabled = true; send.textContent = 'Sending…';
+    try {
+      const url = `${OSM_NOTES}?lat=${c.lat.toFixed(6)}&lon=${c.lng.toFixed(6)}&text=${encodeURIComponent(text)}`;
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 15000);
+      const r = await fetch(url, { method: 'POST', signal: ctl.signal }).finally(() => clearTimeout(timer));
+      if (!r.ok) throw new Error(r.status);
+      store.set('reported', [...store.get('reported', []), key].slice(-200));
+      M.closePopup();
+      toast('Thanks! Your report is on OpenStreetMap for volunteers to add.', 5000);
+    } catch {
+      send.disabled = false; send.textContent = 'Send';
+      toast('Couldn’t send — no internet?');
+    }
+  };
+  const cancel = document.createElement('button');
+  cancel.textContent = 'Cancel'; cancel.onclick = () => showCharger(c);
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:8px'; row.append(send, cancel);
+  el.appendChild(row);
   M.popup(c, el);
 }
 
