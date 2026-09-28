@@ -5,13 +5,13 @@
 | Item | State |
 |---|---|
 | App record | ✅ **HotspotNav: Car Screen Maps**, Apple ID 6816818389, SKU `teslanav-ios` |
-| Build | ✅ 1.0 (1) uploaded, processed, attached to version 1.0 |
+| Build | ⏳ 1.0 (4) uploaded — attach it in place of build 1 |
 | App Information | ✅ subtitle, Navigation / Utilities, content rights (OSM data, licensed) |
 | Age rating | ✅ 4+ (every question None/No) |
 | Pricing & availability | ✅ Free, 175 countries |
 | App Privacy | ✅ published: Data Not Collected; privacy URL set |
 | In-app purchase | ✅ consumable `…teslanav.coffee`, $2.99, display name, review screenshot + notes |
-| Version page | ✅ 4 screenshots (6.5", `design/appstore-6.5/`), promo text, description, keywords, support URL, copyright, review notes, sign-in not required, manual release |
+| Version page | ⏳ replace with the 5 new screenshots (`design/appstore-6.5/`); earlier: 4 screenshots, promo text, description, keywords, support URL, copyright, review notes, sign-in not required, manual release |
 | Review contact | ⏳ needs name, **phone**, email |
 | Submit for Review | ⏳ left for you (attach the coffee IAP to the submission) |
 
@@ -35,48 +35,50 @@ one at a time in order.
 
 ## Promotional text
 
-Turn on Personal Hotspot, open one bookmark in your car's browser, and drive with a big,
-dark, turn-by-turn map — powered by your iPhone's GPS.
+Open one page in your car's browser for a heading-up 3D map with turn-by-turn and voice, or
+mirror your iPhone to use your favourite navigation app with live traffic. Free, no account.
 
 ## Description
 
-Put navigation on your car's big screen, straight from your iPhone.
+Put navigation on your car's big screen.
 
-TeslaNav runs a tiny web server on your iPhone. Join your car to the iPhone's Personal Hotspot,
-open one address in the car's built-in browser, and you get a full-screen night map with:
+MAP ON THE CAR SCREEN
+Open hakob17.github.io/teslanav/car in the car's built-in browser and bookmark it. You get a
+full-screen night map that runs in the car and uses its own GPS:
 
-• Place and address search, nearby results first
-• Turn-by-turn directions with voice prompts
-• Automatic rerouting when you leave the route
-• Arrival time, distance and time remaining
-• Your iPhone's GPS for an accurate, smooth position
+• Heading-up 3D view that turns with the road, or north-up
+• Turn-by-turn directions with voice prompts and street names read in English
+• Search that understands English, Russian and Armenian spellings, nearby results first
+• Automatic rerouting, arrival time, distance and time remaining
+• EV charging stations on the map
 
-MIRROR MODE
-Prefer your usual navigation app and its live traffic? Start a screen broadcast in TeslaNav and
-tap "Phone screen" in the car — your whole iPhone screen appears on the car display.
+MIRROR YOUR IPHONE
+Prefer Yandex Navigator, Google Maps or Waze and their live traffic? Tap Start Broadcast in
+the app, tap "Phone screen" in the car and enter your pairing code once. Your whole iPhone
+screen appears on the car display, full screen, in portrait or landscape.
 
-NO CLOUD, NO ACCOUNT
-Everything runs between your phone and your car. There is no sign-up, no ads and no tracking.
-TeslaNav keeps working while you use other apps or lock the phone.
+FREE, NO ACCOUNT
+No sign-up and no ads. Mirroring streams your screen through TeslaNav's relay only while the
+car is watching (about 0.5 GB of mobile data per hour); nothing is recorded or stored.
 
-Maps © OpenStreetMap contributors. Routing by OSRM, search by Nominatim.
+Maps © OpenStreetMap contributors, OpenFreeMap. Routing by OSRM, search by Photon.
 
 ## Keywords
 
-car screen,car browser,navigation,hotspot,maps,turn by turn,gps,mirror,screen mirroring,route,eta
+car screen,car browser,navigation,screen mirroring,mirror,maps,turn by turn,heading up,ev charger,armenia
 
 ## Notes for App Review
 
-No account or login. The app serves a navigation web page to a car's built-in web browser over
-the iPhone's Personal Hotspot; there is no backend.
+No account or login. The app has two parts:
 
-To review without a car: on the iPhone turn on Personal Hotspot, join it from a Mac or another
-device, open TeslaNav on the iPhone (allow location), and open http://172.20.10.1:8080 in a
-browser on the other device. Search a place, pick a result, and use ⋯ → Simulate drive to see
-turn-by-turn guidance. Mirror mode: tap Start Broadcast in the app, then "Phone screen" on the
-page.
+1. Map mode is a web page, https://hakob17.github.io/teslanav/car/, opened in a car's
+   built-in browser (or any browser). It uses that browser's location. Search a place, pick a
+   result, and use ⋯ → Simulate drive to see turn-by-turn guidance without driving.
 
-Background location is used so the page in the car keeps receiving the iPhone's position while
-the user has another app in front or the phone locked (active navigation).
+2. Mirror mode is this app. Tap Start Broadcast → Start Broadcast. On any computer open the
+   page above, tap "Phone screen" and enter the 8-character code shown in the app. The iPhone
+   screen appears in the browser within a few seconds. The broadcast extension encodes the
+   screen as H.264 and streams it through our relay (a Cloudflare Worker) only while a
+   browser is watching; nothing is stored.
 
-"Buy me a coffee" is an optional tip (consumable IAP); it unlocks nothing.
+"Buy me a coffee" is an optional tip (consumable in-app purchase); it unlocks nothing.
