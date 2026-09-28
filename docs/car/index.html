@@ -86,7 +86,9 @@ body.navigating #status{bottom:130px}
 /* mirror mode */
 #mirror{position:fixed;inset:0;z-index:2000;background:#000;display:flex;align-items:center;justify-content:center}
 #mirrorCanvas{width:100%;height:100%;display:block}
-#mirrorBack{position:absolute;top:16px;right:16px;background:var(--panel);font-weight:600}
+#mirrorBar{position:absolute;top:16px;right:16px;display:flex;gap:10px;transition:opacity .4s}
+#mirrorBar button{background:var(--panel);font-weight:600}
+#mirror.idle #mirrorBar{opacity:0;pointer-events:none}
 #mirrorHint{position:absolute;max-width:560px;padding:28px;text-align:center;font-size:22px}
 #mirrorHint p{color:var(--quiet);font-size:18px;margin:12px 0 0}
 #pair{position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
@@ -161,10 +163,17 @@ body.navigating #status{bottom:130px}
     <span id="mirrorHintTitle">Connecting…</span>
     <p>On the iPhone, open TeslaNav and tap <b>Start Broadcast</b>, then switch to Yandex, Google Maps or Waze.</p>
   </div>
-  <button id="mirrorBack">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>
-    Map
-  </button>
+  <div id="mirrorBar">
+    <button id="fitBtn"></button>
+    <button id="fullBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      Full screen
+    </button>
+    <button id="mirrorBack">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>
+      Map
+    </button>
+  </div>
 </div>
 
 <div id="pair" class="hidden">
@@ -881,7 +890,8 @@ function draw(src, w, h) {
   if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
   const turned = rotation === 90 || rotation === 270;
   const sw = turned ? h : w, sh = turned ? w : h;
-  const scale = Math.min(cw / sw, ch / sh);
+  // Fit shows the whole phone screen; Fill covers the car screen and crops the overflow.
+  const scale = fill ? Math.max(cw / sw, ch / sh) : Math.min(cw / sw, ch / sh);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cw, ch);
   ctx.translate(cw / 2, ch / 2);
@@ -906,7 +916,32 @@ $('pairCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('pairO
 $('pairCancel').onclick = () => show($('pair'), false);
 $('pairBtn').onclick = () => { $('menu').classList.add('hidden'); askPair(() => { if (mode === 'mirror') mirrorConnect(); }); };
 $('mirrorBtn').onclick = () => setMode('mirror');
-$('mirrorBack').onclick = () => setMode('map');
+$('mirrorBack').onclick = () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); setMode('map'); };
+
+let fill = store.get('fill', false);
+function renderFit() { $('fitBtn').textContent = fill ? '⤡  Fit' : '⤢  Fill'; }
+$('fitBtn').onclick = () => { fill = !fill; store.set('fill', fill); renderFit(); canvas.width = 0; send({ type: 'keyframe' }); };
+renderFit();
+
+// Full screen hides the car's side panel and the browser bar. Not every car browser allows it
+// (some only while parked); the car's own ⛶ button next to the address bar also helps.
+$('fullBtn').onclick = () => {
+  const el = $('mirror');
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return toast('Use the ⛶ button next to the address bar');
+  Promise.resolve(req.call(el)).catch(() => toast('Full screen isn’t allowed here — try the ⛶ button next to the address bar'));
+};
+document.addEventListener('fullscreenchange', () => { canvas.width = 0; send({ type: 'keyframe' }); });
+
+// The buttons fade out after a few seconds so they don't cover the phone screen; tap to show.
+let idleTimer;
+function wake() {
+  $('mirror').classList.remove('idle');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => $('mirror').classList.add('idle'), 4000);
+}
+$('mirror').addEventListener('pointerdown', wake);
+$('mirrorBtn').addEventListener('click', wake);
 window.addEventListener('resize', () => { if (canvas.width) { canvas.width = 0; } });
 
 // ---------------------------------------------------------------- start
