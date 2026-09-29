@@ -1,4 +1,4 @@
-# App Store listing — TeslaNav
+# App Store listing — HotspotNav
 
 ## Status (2026-09-28)
 
@@ -57,7 +57,7 @@ the app, tap "Phone screen" in the car and enter your pairing code once. Your wh
 screen appears on the car display, full screen, in portrait or landscape.
 
 FREE, NO ACCOUNT
-No sign-up and no ads. Mirroring streams your screen through TeslaNav's relay only while the
+No sign-up and no ads. Mirroring streams your screen through HotspotNav's relay only while the
 car is watching (about 0.5 GB of mobile data per hour); nothing is recorded or stored.
 
 Maps © OpenStreetMap contributors, OpenFreeMap. Routing by OSRM, search by Photon.

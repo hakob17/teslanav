@@ -63,7 +63,7 @@ struct ContentView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("TeslaNav").font(.largeTitle.bold())
+                    Text("HotspotNav").font(.largeTitle.bold())
                     Text("Navigation and your iPhone screen on the car's display.")
                         .foregroundStyle(.secondary)
                 }
@@ -129,7 +129,7 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
             .tint(model.mirrorLive ? .red : .accentColor)
             .controlSize(.large)
-            Text("The screen is sent over the internet through TeslaNav's relay only while the car is watching (about 0.5 GB per hour). Nothing is stored.")
+            Text("The screen is sent over the internet through HotspotNav's relay only while the car is watching (about 0.5 GB per hour). Nothing is stored.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -150,8 +150,8 @@ struct ContentView: View {
 
     private var supportCard: some View {
         Card {
-            Text("Support TeslaNav").font(.headline)
-            Text("TeslaNav is free, with no ads and no accounts. If it makes your drives better, you can buy me a coffee.")
+            Text("Support HotspotNav").font(.headline)
+            Text("HotspotNav is free, with no ads and no accounts. If it makes your drives better, you can buy me a coffee.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Button {

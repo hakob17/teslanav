@@ -28,7 +28,7 @@ targets:
     info:
       path: Sources/Info.plist
       properties:
-        CFBundleDisplayName: TeslaNav
+        CFBundleDisplayName: HotspotNav
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -55,7 +55,7 @@ targets:
     info:
       path: Broadcast/Info.plist
       properties:
-        CFBundleDisplayName: TeslaNav Screen
+        CFBundleDisplayName: HotspotNav Screen
         NSExtension:
           NSExtensionPointIdentifier: com.apple.broadcast-services-upload
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler

@@ -1,4 +1,4 @@
-// TeslaNav relay: forwards the iPhone's screen stream to the car's browser.
+// HotspotNav relay: forwards the iPhone's screen stream to the car's browser.
 //
 //   wss://…/ws?room=<code>&role=phone   the broadcast extension (sends video)
 //   wss://…/ws?room=<code>&role=car     the car page (receives video)
@@ -11,7 +11,7 @@ const ROOM = /^[A-Z0-9]{8}$/;
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/') return new Response('TeslaNav relay\n');
+    if (url.pathname === '/') return new Response('HotspotNav relay\n');
     if (url.pathname !== '/ws') return new Response('Not found', { status: 404 });
 
     const room = (url.searchParams.get('room') || '').toUpperCase();

@@ -1,4 +1,4 @@
-# TeslaNav
+# HotspotNav
 
 Turn on the iPhone hotspot, open one bookmark in the Tesla browser, get navigation on the car
 screen. No hosting, no accounts, no cloud: the iPhone app serves everything at
@@ -42,13 +42,13 @@ xcodegen generate
 open TeslaNav.xcodeproj
 ```
 
-Pick your iPhone, run the **TeslaNav** scheme. Automatic signing with team `SXEFA57E5G`
+Pick your iPhone, run the **TeslaNav** scheme (app name HotspotNav). Automatic signing with team `SXEFA57E5G`
 registers the App Group `group.com.hakobhakobyan.teslanav` for both targets on first build.
 
 ## Use
 
 1. Personal Hotspot on; join it from the car's Wi-Fi.
-2. Open TeslaNav once (allow location — "While Using" is enough).
+2. Open HotspotNav once (allow location — "While Using" is enough).
 3. In the Tesla browser open `http://172.20.10.1:8080` and bookmark it.
 4. Mirror mode: tap **Start Broadcast** in the app, then **Phone screen** in the car.
 

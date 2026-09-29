@@ -2,7 +2,7 @@ import Foundation
 import StoreKit
 
 /// "Buy me a coffee": a consumable in-app purchase that can be bought any number of times.
-/// It unlocks nothing — TeslaNav is free — it's a way to say thanks. Apple handles the payment,
+/// It unlocks nothing — HotspotNav is free — it's a way to say thanks. Apple handles the payment,
 /// so there is no backend and nothing to keep in sync.
 @MainActor
 final class Tips: ObservableObject {

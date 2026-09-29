@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>TeslaNav</title>
+<title>HotspotNav</title>
 <link rel="stylesheet" href="maplibre-gl.css">
 <link rel="stylesheet" href="leaflet.css">
 <style>
@@ -195,7 +195,7 @@ body.navigating #status{bottom:130px}
   <canvas id="mirrorCanvas"></canvas>
   <div id="mirrorHint" class="panel">
     <span id="mirrorHintTitle">Connecting…</span>
-    <p>On the iPhone, open TeslaNav and tap <b>Start Broadcast</b>, then switch to Yandex, Google Maps or Waze.</p>
+    <p>On the iPhone, open HotspotNav and tap <b>Start Broadcast</b>, then switch to Yandex, Google Maps or Waze.</p>
   </div>
   <div id="mirrorBar">
     <button id="fitBtn"></button>
@@ -213,7 +213,7 @@ body.navigating #status{bottom:130px}
 <div id="pair" class="hidden">
   <div id="pairBox" class="panel">
     <h2>Pair with your iPhone</h2>
-    <p>Enter the 8-character code shown in the TeslaNav app on your iPhone.</p>
+    <p>Enter the 8-character code shown in the HotspotNav app on your iPhone.</p>
     <input id="pairCode" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX">
     <div class="row"><button id="pairCancel">Cancel</button><button id="pairOk" class="primary">Connect</button></div>
   </div>
@@ -619,7 +619,7 @@ $('recenter').onclick = () => setFollow(true);
 
 // ---------------------------------------------------------------- location sources
 function useBrowserLocation() {
-  if (!('geolocation' in navigator)) { source = 'none'; setStatus('No location source — open this page from the TeslaNav iPhone app', 'bad'); return; }
+  if (!('geolocation' in navigator)) { source = 'none'; setStatus('No location source — open this page from the HotspotNav iPhone app', 'bad'); return; }
   source = 'browser';
   navigator.geolocation.watchPosition(g => {
     const c = g.coords;
@@ -1296,9 +1296,9 @@ function reportCharger(c) {
     if (!picked.size) return toast('Pick at least one connector');
     if (store.get('reported', []).includes(key)) return toast('You already reported this charger — thank you!');
     const tags = [...picked].map(k => `${REPORT_SOCKETS[k]}=yes`).concat(power ? [`charging_station:output=${power.replace('+', '')}`] : []);
-    const text = `EV charging station — connectors reported by a driver (TeslaNav car page)\n\n` +
+    const text = `EV charging station — connectors reported by a driver (HotspotNav car page)\n\n` +
       `Station: ${c.n}${c.o ? ' (' + c.o + ')' : ''}\nConnectors: ${[...picked].join(', ')}\n` +
-      (power ? `Fastest charging: ${power}\n` : '') + `Suggested tags: ${tags.join('; ')}\n\n#TeslaNav #evcharging`;
+      (power ? `Fastest charging: ${power}\n` : '') + `Suggested tags: ${tags.join('; ')}\n\n#HotspotNav #evcharging`;
     send.disabled = true; send.textContent = 'Sending…';
     try {
       const url = `${OSM_NOTES}?lat=${c.lat.toFixed(6)}&lon=${c.lng.toFixed(6)}&text=${encodeURIComponent(text)}`;
