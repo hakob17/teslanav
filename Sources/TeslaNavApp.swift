@@ -142,6 +142,7 @@ struct ContentView: View {
                 Text("1. Open the address above in the car's browser and bookmark it. It works on the car's own connection or your iPhone's hotspot.")
                 Text("2. Search a destination on the car screen and drive.")
                 Text("3. For live traffic, tap Start Broadcast here, open your navigation app, and tap “Phone screen” in the car.")
+                Text("4. Found a place in Yandex Maps, Google Maps or Apple Maps? Tap Share → HotspotNav and the car starts navigating there. Pair the car page once with the code above (⋯ → Phone code).")
             }
             .font(.subheadline)
             .foregroundStyle(.secondary)

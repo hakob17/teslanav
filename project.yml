@@ -9,7 +9,7 @@ settings:
     DEVELOPMENT_TEAM: SXEFA57E5G
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "6"
+    CURRENT_PROJECT_VERSION: "7"
 targets:
   # The app: HTTP server on :8080, GPS, and the car web page.
   TeslaNav:
@@ -20,6 +20,7 @@ targets:
       - Shared
     dependencies:
       - target: TeslaNavBroadcast
+      - target: TeslaNavShare
     entitlements:
       path: Sources/TeslaNav.entitlements
       properties:
@@ -63,6 +64,34 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hakobhakobyan.teslanav.broadcast
+  # Share extension: "Share → HotspotNav" from a maps app sends the place to the car page.
+  TeslaNavShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ShareExt
+      - Shared
+    entitlements:
+      path: ShareExt/TeslaNavShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.hakobhakobyan.teslanav
+    info:
+      path: ShareExt/Info.plist
+      properties:
+        CFBundleDisplayName: HotspotNav
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionJavaScriptPreprocessingFile: PageURL
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsWebPageWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hakobhakobyan.teslanav.share
 schemes:
   TeslaNav:
     build:

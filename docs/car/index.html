@@ -964,6 +964,7 @@ function buildRoute(rt) {
 function setRoute(r, d) {
   route = r; dest = d; arrived = false;
   store.set('dest', d);
+  store.set('destAt', Date.now());
   M.setRoute(r.pts);
   M.setDest(d);
   document.body.classList.add('navigating');
@@ -1040,6 +1041,8 @@ function important(s) {
 function navUpdate() {
   const r = route;
   if (!r || !pos || arrived) return;
+  // Marks the trip as live, so a reload mid-drive resumes it but a later visit doesn't.
+  if (Date.now() - (store.get('destAt', 0) || 0) > 30_000) store.set('destAt', Date.now());
   const loc = locate(r, pos);
 
   // Off route for three fixes in a row → ask for a new route (at most every 8 s).
@@ -1079,6 +1082,7 @@ function navUpdate() {
 
 function arrive() {
   arrived = true;
+  store.set('dest', null);
   say('You have arrived' + (dest && dest.name && dest.name !== 'Dropped pin' ? ' at ' + dest.name : ''));
   toast('You have arrived', 5000);
   setTimeout(endRoute, 5000);
@@ -1567,6 +1571,7 @@ function askPair(then) {
     if (code.length !== 8) return toast('The code has 8 letters and digits');
     store.set('pair', code);
     show($('pair'), false);
+    navConnect();
     if (then) then();
   };
 }
@@ -1602,15 +1607,53 @@ $('mirror').addEventListener('pointerdown', wake);
 $('mirrorBtn').addEventListener('click', wake);
 window.addEventListener('resize', () => { if (canvas.width) { canvas.width = 0; } });
 
+// ---------------------------------------------------------------- places from the phone
+// Share a place from Yandex Maps, Google Maps or Apple Maps on the iPhone (Share → HotspotNav)
+// and it arrives here through the relay. This socket only receives destinations, so it doesn't
+// count as watching the phone's screen (no video is sent for it).
+let navSock = null, navRetry = null, navDelay = 2000;
+function navConnect() {
+  clearTimeout(navRetry);
+  if (navSock) { const old = navSock; navSock = null; old.close(); }
+  if (!pairCode()) return;
+  const sock = new WebSocket(`${RELAY}?room=${encodeURIComponent(pairCode())}&role=nav`);
+  sock.onopen = () => { navDelay = 2000; };
+  sock.onmessage = e => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.type === 'dest' && Number.isFinite(m.lat) && Number.isFinite(m.lng)) placeFromPhone(m);
+  };
+  sock.onclose = () => {
+    if (navSock !== sock) return;
+    navSock = null;
+    navRetry = setTimeout(navConnect, navDelay);
+    navDelay = Math.min(navDelay * 2, 60000);
+  };
+  navSock = sock;
+}
+
+function placeFromPhone(m) {
+  const name = m.name || 'Place from your phone';
+  const it = { name, detail: m.source ? 'from ' + m.source : 'from your phone', lat: m.lat, lng: m.lng };
+  if (mode === 'mirror') setMode('map');
+  $('menu').classList.add('hidden');
+  show($('chargerPanel'), false);
+  toast('📱 ' + name, 4000);
+  choose(it);
+}
+
 // ---------------------------------------------------------------- start
 // ?to=lat,lng[&name=…] opens straight into navigation (a shareable destination link);
 // adding &sim drives it with the simulator.
 const to = (params.get('to') || '').split(',').map(Number);
 dest = to.length === 2 && to.every(Number.isFinite)
   ? { lat: to[0], lng: to[1], name: params.get('name') || 'Destination' }
-  : store.get('dest', null);      // otherwise resume navigation after a reload
+  // Otherwise resume a trip only if the page reloaded mid-drive (the car browser does that);
+  // a trip left open from an earlier drive is dropped, so the map always opens without a route.
+  : (Date.now() - (store.get('destAt', 0) || 0) < 5 * 60_000 ? store.get('dest', null) : null);
+if (!dest) store.set('dest', null);
 detectSource();
 if (store.get('mode', 'map') === 'mirror' && pairCode()) setMode('mirror');
+navConnect();
 // A ?to= link opened without a GPS fix (e.g. testing at a desk): route from the map centre.
 if (params.has('to') && dest) setTimeout(() => { if (!pos && !route) routeTo(dest); }, 3000);
 })();
