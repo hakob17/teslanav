@@ -36,10 +36,17 @@ final class Tips: ObservableObject {
     var displayPrice: String? { product?.displayPrice }
 
     func buyCoffee() async {
-        guard let product, !purchasing else { return }
+        guard !purchasing else { return }
         purchasing = true
         failure = nil
         defer { purchasing = false }
+        // The product may not have loaded at launch (offline, App Store busy): try again now
+        // rather than leaving the button dead.
+        if product == nil { await load() }
+        guard let product else {
+            failure = "The App Store isn't reachable right now. Please try again in a moment."
+            return
+        }
         do {
             switch try await product.purchase() {
             case .success(let verification):

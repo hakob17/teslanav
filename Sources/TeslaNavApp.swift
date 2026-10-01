@@ -165,7 +165,7 @@ struct ContentView: View {
             .tint(Color(red: 1, green: 0.867, blue: 0))
             .foregroundStyle(.black)
             .controlSize(.large)
-            .disabled(tips.product == nil || tips.purchasing)
+            .disabled(tips.purchasing)
             if tips.thanked {
                 Label("Thank you for the coffee! ☕️", systemImage: "heart.fill")
                     .font(.subheadline)

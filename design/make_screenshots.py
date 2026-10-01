@@ -105,7 +105,7 @@ img.save(f"{OUT}/4-mirror.png")
 
 car_slide("5-chargers", "chargers.png", "EV chargers on the map",
           "Tap a charger to see its connectors and drive there.",
-          [((380, 150, 1540, 900), 1100)], ["Free", "No account", "No ads"])
+          [((380, 150, 1540, 900), 1100)], ["Connector types", "Filters", "Report fixes"])
 
 # 6.5" copies (1284×2778): App Store Connect asks for this size too.
 os.makedirs("design/appstore-6.5", exist_ok=True)
