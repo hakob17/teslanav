@@ -7,13 +7,21 @@
 <link rel="stylesheet" href="maplibre-gl.css">
 <link rel="stylesheet" href="leaflet.css">
 <style>
+/* The car browser has no Armenian or Cyrillic font, so names in those scripts showed as boxes.
+   These subsets only cover those scripts (unicode-range); Latin text keeps the system font. */
+@font-face{font-family:"Noto Sans Armenian";font-style:normal;font-weight:400 700;font-display:swap;
+  src:url(fonts/noto-sans-armenian.woff2) format("woff2");unicode-range:U+0308,U+0530-058F,U+2010,U+2024,U+25CC,U+FB13-FB17}
+@font-face{font-family:"Noto Sans Cyr";font-style:normal;font-weight:400 700;font-display:swap;
+  src:url(fonts/noto-sans-cyrillic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 :root{
+  /* UI scale for everything drawn over the map; the menu's Text size changes it. */
+  --ui:.8;
   --bg:#0d1015;--panel:rgba(19,23,30,.94);--line:#2a313c;--ink:#f2f4f7;--quiet:#9aa4b2;
   --accent:#3e8bff;--ok:#2fbf71;--warn:#f5a524;--bad:#ff5a5f;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
-  font:18px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none;
+  font:18px/1.3 "Noto Sans Armenian","Noto Sans Cyr",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none;
   -webkit-tap-highlight-color:transparent}
 #map{position:absolute;inset:0;background:var(--bg)}
 .leaflet-container{background:var(--bg);font:inherit}
@@ -35,6 +43,10 @@ button.danger{background:#3b1c20;border-color:#5b2a2f;color:#ffc2c4;font-weight:
 button svg{width:28px;height:28px}
 .hidden{display:none!important}
 .left{position:absolute;left:16px;width:min(480px,calc(100% - 120px));z-index:1000}
+.left,#fabs,#menu,#pairBox,#mirrorBar,#mirrorHint{zoom:var(--ui)}
+#status,#toast{font-size:15px}
+/* While navigating, the charger list opens below the turn banner instead of under it. */
+body.navigating #chargerPanel{top:190px}
 
 /* search */
 #search{top:16px;overflow:hidden}
@@ -128,7 +140,8 @@ body.navigating #status{bottom:130px}
 <div id="search" class="panel left">
   <div id="searchRow">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-    <input id="q" type="search" placeholder="Where to?" autocomplete="off" spellcheck="false">
+    <!-- type=text, not search: the car shows its web-address keyboard (".com", no space bar) for search fields. -->
+    <input id="q" type="text" enterkeyhint="search" placeholder="Where to?" autocomplete="off" autocorrect="off" spellcheck="false">
     <button id="clearQ" class="hidden" aria-label="Clear">✕</button>
   </div>
   <div id="results"></div>
@@ -182,6 +195,7 @@ body.navigating #status{bottom:130px}
   <button id="voiceBtn"></button>
   <button id="testVoice">Test voice</button>
   <button id="styleBtn"></button>
+  <button id="sizeBtn"></button>
   <button id="engineBtn"></button>
 
   <button id="simBtn">Simulate drive</button>
@@ -1196,7 +1210,14 @@ renderVoice();
 
 // ---------------------------------------------------------------- menu + simulator
 $('menuBtn').onclick = () => $('menu').classList.toggle('hidden');
+const SIZES = [['Small', .7], ['Medium', .8], ['Large', .92]];
+let sizeIndex = Math.max(0, SIZES.findIndex(([name]) => name === store.get('textSize', 'Medium')));
+function applySize() { document.documentElement.style.setProperty('--ui', SIZES[sizeIndex][1]); }
+applySize();
+$('sizeBtn').onclick = () => { sizeIndex = (sizeIndex + 1) % SIZES.length; store.set('textSize', SIZES[sizeIndex][0]); applySize(); renderMenu(); };
+
 function renderMenu() {
+  $('sizeBtn').textContent = '🔠  Text size: ' + SIZES[sizeIndex][0];
   $('styleBtn').textContent = '🗺  Map: ' + M.styleName();
   $('engineBtn').textContent = M.kind === 'vector' ? '🧭  Switch to classic map' : '🧭  Switch to vector map';
 }
